@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ToonLab — Animation Studio for Young Creators</title>
+<meta name="description" content="A free, fun animation studio for kids ages 11–13. Draw flipbooks, animate bouncing shapes, pose a stickman, and learn the 12 principles of animation." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎨</text></svg>" />
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="brand"><span class="logo"></span> ToonLab</a>
+  <div class="nav-links">
+    <a href="index.html" class="active">Home</a>
+    <a href="movie.html">Movie</a>
+    <a href="flipbook.html">Flipbook</a>
+    <a href="bouncer.html">Bouncer</a>
+    <a href="stickman.html">Stickman</a>
+    <a href="learn.html">Learn</a>
+    <a href="quiz.html">Quiz</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <section class="hero">
+    <!-- floating background stickers -->
+    <div class="sticker s1">🎨</div>
+    <div class="sticker s2">⭐</div>
+    <div class="sticker s3">🚀</div>
+    <div class="sticker s4">✨</div>
+    <div class="sticker s5">🎬</div>
+
+    <div class="sub">★ Animation Studio • Made for Young Creators ★</div>
+    <h1 aria-label="ToonLab">
+      <span class="letter">T</span><span class="letter">o</span><span class="letter">o</span><span class="letter">n</span><span class="letter">L</span><span class="letter">a</span><span class="letter">b</span>
+    </h1>
+
+    <!-- big mascot -->
+    <div style="margin: 22px auto 6px; max-width:520px">
+      <svg id="mascot" viewBox="0 0 520 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="bodyGrad" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#ff7ad9"/>
+            <stop offset="100%" stop-color="#7c3aed"/>
+          </linearGradient>
+          <radialGradient id="cheek" cx=".5" cy=".5" r=".5">
+            <stop offset="0%" stop-color="#ff3b8b" stop-opacity=".8"/>
+            <stop offset="100%" stop-color="#ff3b8b" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <!-- shadow puddle -->
+        <ellipse cx="260" cy="240" rx="120" ry="12" fill="#1a0b3d" opacity=".18"/>
+
+        <!-- left bouncy friend -->
+        <g transform="translate(70,140)">
+          <circle cx="0" cy="0" r="36" fill="#fbbf24" stroke="#1a0b3d" stroke-width="5"/>
+          <circle cx="-10" cy="-6" r="5" fill="#1a0b3d"/>
+          <circle cx="10"  cy="-6" r="5" fill="#1a0b3d"/>
+          <circle cx="-10" cy="-8" r="2" fill="#fff"/>
+          <circle cx="10"  cy="-8" r="2" fill="#fff"/>
+          <path d="M-10 10 Q0 22 10 10" stroke="#1a0b3d" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <animateTransform attributeName="transform" type="translate" values="70,140; 70,116; 70,140" dur="1.4s" repeatCount="indefinite"/>
+        </g>
+
+        <!-- right wedge buddy -->
+        <g transform="translate(440,150)">
+          <polygon points="0,-32 30,28 -30,28" fill="#06b6d4" stroke="#1a0b3d" stroke-width="5"/>
+          <circle cx="-8" cy="10" r="5" fill="#1a0b3d"/>
+          <circle cx="10" cy="10" r="5" fill="#1a0b3d"/>
+          <path d="M-8 22 Q1 28 10 22" stroke="#1a0b3d" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <animateTransform attributeName="transform" type="rotate" values="-8 0 0; 8 0 0; -8 0 0" dur="2s" repeatCount="indefinite" additive="sum"/>
+          <animateTransform attributeName="transform" type="translate" values="440,150" dur="2s" repeatCount="indefinite" additive="sum"/>
+        </g>
+
+        <!-- center mascot: cute pencil-bot -->
+        <g id="mascot-body">
+          <!-- body -->
+          <rect x="200" y="60" width="120" height="140" rx="60" fill="url(#bodyGrad)" stroke="#1a0b3d" stroke-width="6"/>
+          <!-- antenna -->
+          <line x1="260" y1="60" x2="260" y2="30" stroke="#1a0b3d" stroke-width="5"/>
+          <circle cx="260" cy="24" r="10" fill="#fbbf24" stroke="#1a0b3d" stroke-width="4">
+            <animate attributeName="r" values="10;13;10" dur="1s" repeatCount="indefinite"/>
+          </circle>
+          <!-- screen face -->
+          <rect x="220" y="86" width="80" height="60" rx="14" fill="#fff" stroke="#1a0b3d" stroke-width="5"/>
+          <!-- eyes -->
+          <g id="eyes">
+            <circle cx="244" cy="116" r="8" fill="#1a0b3d"/>
+            <circle cx="276" cy="116" r="8" fill="#1a0b3d"/>
+            <circle cx="246" cy="113" r="2.5" fill="#fff"/>
+            <circle cx="278" cy="113" r="2.5" fill="#fff"/>
+            <!-- blink -->
+            <rect id="blinkL" x="236" y="116" width="16" height="0" fill="#fff"/>
+            <rect id="blinkR" x="268" y="116" width="16" height="0" fill="#fff"/>
+          </g>
+          <!-- smile -->
+          <path d="M236 138 Q260 152 284 138" stroke="#1a0b3d" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <!-- cheeks -->
+          <circle cx="224" cy="132" r="8" fill="url(#cheek)"/>
+          <circle cx="296" cy="132" r="8" fill="url(#cheek)"/>
+          <!-- arms holding things -->
+          <g>
+            <!-- left arm holding paintbrush -->
+            <path d="M200 130 Q170 140 150 160" stroke="#1a0b3d" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <g transform="translate(130,165)">
+              <rect x="-6" y="-20" width="12" height="34" rx="3" fill="#ec4899" stroke="#1a0b3d" stroke-width="3"/>
+              <rect x="-7" y="-30" width="14" height="14" rx="3" fill="#fbbf24" stroke="#1a0b3d" stroke-width="3"/>
+              <animateTransform attributeName="transform" type="rotate" values="-25 0 0;15 0 0;-25 0 0" dur="2.4s" repeatCount="indefinite" additive="sum"/>
+              <animateTransform attributeName="transform" type="translate" values="130,165" dur="2.4s" repeatCount="indefinite" additive="sum"/>
+            </g>
+            <!-- right arm wave -->
+            <path id="rightArm" d="M320 130 Q360 130 380 100" stroke="#1a0b3d" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <circle id="rightHand" cx="380" cy="100" r="10" fill="#fbbf24" stroke="#1a0b3d" stroke-width="4">
+              <animate attributeName="cy" values="100;82;100" dur="1.2s" repeatCount="indefinite"/>
+            </circle>
+          </g>
+          <!-- feet -->
+          <ellipse cx="232" cy="208" rx="18" ry="8" fill="#1a0b3d"/>
+          <ellipse cx="288" cy="208" rx="18" ry="8" fill="#1a0b3d"/>
+          <!-- whole body subtle bob -->
+          <animateTransform attributeName="transform" type="translate" values="0,0; 0,-8; 0,0" dur="2.2s" repeatCount="indefinite"/>
+        </g>
+
+        <!-- sparkles around -->
+        <g fill="#fbbf24" stroke="#1a0b3d" stroke-width="2">
+          <polygon points="180,40 184,52 196,52 186,60 190,72 180,64 170,72 174,60 164,52 176,52" >
+            <animateTransform attributeName="transform" type="rotate" from="0 180 56" to="360 180 56" dur="6s" repeatCount="indefinite"/>
+          </polygon>
+          <polygon points="350,200 354,212 366,212 356,220 360,232 350,224 340,232 344,220 334,212 346,212">
+            <animateTransform attributeName="transform" type="rotate" from="360 350 216" to="0 350 216" dur="5s" repeatCount="indefinite"/>
+          </polygon>
+        </g>
+      </svg>
+    </div>
+
+    <p class="lead">Bring your drawings to <em>LIFE</em>! Make real cartoons in your browser — no app, no account, no boring stuff.</p>
+    <div class="cta-row">
+      <a href="movie.html" class="btn rainbow big" data-sound="fanfare" data-confetti>🎬 Make a Mini-Movie</a>
+      <a href="learn.html" class="btn ghost big" data-sound="pop">How does it work?</a>
+    </div>
+  </section>
+
+  <section class="featured-movie">
+    <a class="featured-card" href="movie.html" data-sound="fanfare">
+      <span class="new-badge">★ NEW ★</span>
+      <div class="featured-inner">
+        <div class="featured-text">
+          <h2>🎬 Movie Maker</h2>
+          <p>Be the <strong>director</strong>! Pick a magical world, drag dragons, knights, robots, and fairies onto the stage. Write what they say. Snap a scene, move them somewhere new, snap another. Hit ▶ Play Movie and watch your story come to life with a <strong>title card, music, and "The End"</strong> — just like a real animated film.</p>
+          <span class="btn rainbow big">Open Movie Maker →</span>
+        </div>
+        <div class="featured-preview">
+          <div class="preview-scene">
+            <span class="p-sun">☀️</span>
+            <span class="p-cloud">☁️</span>
+            <span class="p-castle">🏰</span>
+            <span class="p-dragon">🐉</span>
+            <span class="p-princess">👸</span>
+            <span class="p-bubble">Let's go!</span>
+            <span class="p-tree t1">🌲</span>
+            <span class="p-tree t2">🌳</span>
+            <span class="p-star s1">⭐</span>
+            <span class="p-star s2">✨</span>
+          </div>
+        </div>
+      </div>
+    </a>
+  </section>
+
+  <h2 style="text-align:center; margin-top:50px; font-size:32px">🛠 More Tools to Try</h2>
+
+  <section class="tools" aria-label="Animation tools">
+    <a class="tool-card" href="flipbook.html" data-sound="pop">
+      <div class="glass"></div>
+      <span class="tag">Tool 1</span>
+      <div class="icon" style="background:#ffe6f4">📒</div>
+      <h3>Flipbook</h3>
+      <p>Draw frame by frame just like the old animators did. Watch your sketch come alive!</p>
+      <span class="btn pink go">Open Flipbook →</span>
+    </a>
+    <a class="tool-card" href="bouncer.html" data-sound="pop">
+      <div class="glass"></div>
+      <span class="tag">Tool 2</span>
+      <div class="icon" style="background:#e0f7ff">🏀</div>
+      <h3>Bouncer</h3>
+      <p>Place shapes, pick a START and an END. Watch them tween, bounce, and zoom!</p>
+      <span class="btn blue go">Open Bouncer →</span>
+    </a>
+    <a class="tool-card" href="stickman.html" data-sound="pop">
+      <div class="glass"></div>
+      <span class="tag">Tool 3</span>
+      <div class="icon" style="background:#e7ffd1">🕺</div>
+      <h3>Stickman</h3>
+      <p>Drag the joints of a tiny person to make him dance, jump, or wave!</p>
+      <span class="btn green go">Open Stickman →</span>
+    </a>
+    <a class="tool-card" href="learn.html" data-sound="pop">
+      <div class="glass"></div>
+      <span class="tag">Bonus</span>
+      <div class="icon" style="background:#fff3c4">🧠</div>
+      <h3>Learn</h3>
+      <p>The 12 secret rules real Pixar and Disney animators use — with live demos.</p>
+      <span class="btn purple go">Open Lessons →</span>
+    </a>
+    <a class="tool-card" href="quiz.html" data-sound="pop">
+      <div class="glass"></div>
+      <span class="tag">Quiz</span>
+      <div class="icon" style="background:#ffe6f4">🏆</div>
+      <h3>Quiz</h3>
+      <p>30 questions across Easy, Medium, and Hard. Earn medals — can you get all 10 right?</p>
+      <span class="btn pink go">Take the Quiz →</span>
+    </a>
+  </section>
+
+  <section class="ticker" aria-label="Fun animation facts">
+    <span class="label">⭐ Did you know?</span>
+    <div class="scroll">
+      <p>🎬 The first cartoon was made in 1908 in France &nbsp;•&nbsp;
+         📺 TV shows 24 pictures every SECOND &nbsp;•&nbsp;
+         💡 Pixar's first short was a bouncy lamp &nbsp;•&nbsp;
+         🧱 Stop-motion animators move things 1 mm at a time &nbsp;•&nbsp;
+         🐭 Mickey Mouse is just two circles &nbsp;•&nbsp;
+         🎨 A flipbook can need 60 drawings for 5 seconds! 😱</p>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:30px">
+    <h2 style="margin-top:0; font-size:32px">🚀 How to use ToonLab</h2>
+    <div class="howitworks">
+      <div class="howstep">
+        <div class="step-num">1</div>
+        <h3>Pick a tool</h3>
+        <p>Each one teaches a different way real animators work — drawing, in-between'ing, and posing.</p>
+      </div>
+      <div class="howstep">
+        <div class="step-num">2</div>
+        <h3>Make magic</h3>
+        <p>Use the toolbar on the side. Add frames, pick colors, hit ▶ Play and watch the magic!</p>
+      </div>
+      <div class="howstep">
+        <div class="step-num">3</div>
+        <h3>Save & share</h3>
+        <p>Save your animation as an image, then text it to a friend — or print it as a flipbook!</p>
+      </div>
+      <div class="howstep">
+        <div class="step-num">4</div>
+        <h3>Level up</h3>
+        <p>Read the Learn page to unlock the 12 animation superpowers used at Pixar & Disney.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  ✨ Made for curious creators &nbsp;•&nbsp; Works on phones, tablets, and computers &nbsp;•&nbsp; No data collected ✨
+</footer>
+
+<script src="fx.js"></script>
+<script>
+  // mascot occasional blink
+  const blinkL = document.getElementById('blinkL');
+  const blinkR = document.getElementById('blinkR');
+  function blink(){
+    if (!blinkL) return;
+    blinkL.setAttribute('height','16'); blinkL.setAttribute('y','108');
+    blinkR.setAttribute('height','16'); blinkR.setAttribute('y','108');
+    setTimeout(()=>{
+      blinkL.setAttribute('height','0');
+      blinkR.setAttribute('height','0');
+    }, 130);
+    setTimeout(blink, 2200 + Math.random()*3000);
+  }
+  setTimeout(blink, 1500);
+
+  // welcome toast
+  window.addEventListener('load', ()=>{
+    setTimeout(()=> ToonFX && ToonFX.toast("Welcome to ToonLab! Pick a tool to start.", "🎉"), 500);
+  });
+</script>
+</body>
+</html>

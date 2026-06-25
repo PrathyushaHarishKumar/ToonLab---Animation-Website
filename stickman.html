@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Stickman — ToonLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕺</text></svg>" />
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="brand"><span class="logo"></span> ToonLab</a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="movie.html">Movie</a>
+    <a href="flipbook.html">Flipbook</a>
+    <a href="bouncer.html">Bouncer</a>
+    <a href="stickman.html" class="active">Stickman</a>
+    <a href="learn.html">Learn</a>
+    <a href="quiz.html">Quiz</a>
+  </div>
+</nav>
+
+<div class="page">
+  <section class="banner">
+    <span class="float f1">🕺</span>
+    <span class="float f2">💃</span>
+    <span class="float f3">⭐</span>
+    <h1>🕺 Stickman Studio</h1>
+    <p>Drag the colorful dots to bend the stickman's arms, legs, and body. Save a pose, bend him a tiny bit more, save another. Press ▶ Play to make him <strong>DANCE!</strong></p>
+  </section>
+
+  <div class="studio">
+    <aside class="panel">
+      <h2>Poses</h2>
+
+      <div class="group">
+        <label>Quick poses</label>
+        <div class="button-row">
+          <button class="btn small ghost" data-pose="stand">🧍 Stand</button>
+          <button class="btn small ghost" data-pose="wave">👋 Wave</button>
+          <button class="btn small ghost" data-pose="jump">🤸 Jump</button>
+          <button class="btn small ghost" data-pose="run">🏃 Run</button>
+          <button class="btn small ghost" data-pose="dance">💃 Dance</button>
+          <button class="btn small ghost" data-pose="sit">🪑 Sit</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <label>Stickman color</label>
+        <div class="swatches" id="swatches"></div>
+      </div>
+
+      <div class="group">
+        <label>Speed: <span id="fpsLabel">6</span> fps</label>
+        <input type="range" id="fps" min="1" max="20" value="6" style="width:100%" />
+      </div>
+
+      <div class="group">
+        <div class="button-row">
+          <button class="btn green" id="addPose" data-sound="pop" data-confetti>📸 Save Pose</button>
+          <button class="btn ghost small" id="clearPoses" data-sound="boop">🗑 Reset</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="button-row">
+          <button class="btn pink" id="playBtn" data-sound="ding">▶ Play</button>
+          <button class="btn ghost" id="stopBtn" data-sound="boop">⏹ Stop</button>
+        </div>
+      </div>
+    </aside>
+
+    <section class="panel stage-wrap">
+      <canvas id="stage" class="stage" width="900" height="560"></canvas>
+      <div class="frames" id="frames"></div>
+    </section>
+  </div>
+
+  <div class="tip-strip">
+    <span class="ico">🎭</span>
+    <div><strong>Try this:</strong> Save 6 poses where the arms swing back and forth, then play it fast. Boom — your stickman is waving!</div>
+  </div>
+</div>
+
+<footer>The body has 9 bones. The story has 1,000.</footer>
+
+<script src="fx.js"></script>
+<script>
+/* ---------------- Stickman Studio ----------------
+   The stickman is described by 11 "joints" (points).
+   You drag any joint and the bones connecting them follow.
+*/
+const stage = document.getElementById('stage');
+const ctx = stage.getContext('2d');
+const W = stage.width, H = stage.height;
+const COLORS = ['#1f1147','#ec4899','#7c3aed','#06b6d4','#84cc16','#fbbf24','#fb923c'];
+let color = COLORS[0];
+
+const sw = document.getElementById('swatches');
+COLORS.forEach((c,i)=>{
+  const el = document.createElement('div');
+  el.className = 'swatch' + (i===0?' active':'');
+  el.style.background = c;
+  el.onclick = ()=>{
+    color = c;
+    document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));
+    el.classList.add('active');
+    render();
+  };
+  sw.appendChild(el);
+});
+
+// Joints: head, neck, hips, lshoulder, lelbow, lhand, rshoulder, relbow, rhand, lknee, lfoot, rknee, rfoot
+function makePose(cx, cy){
+  // baseline pose centered around (cx, cy)
+  return {
+    head:      [cx,        cy - 180],
+    neck:      [cx,        cy - 130],
+    hips:      [cx,        cy -  40],
+    lshoulder: [cx - 35,   cy - 120],
+    lelbow:    [cx - 70,   cy -  70],
+    lhand:     [cx - 90,   cy -  20],
+    rshoulder: [cx + 35,   cy - 120],
+    relbow:    [cx + 70,   cy -  70],
+    rhand:     [cx + 90,   cy -  20],
+    lknee:     [cx - 25,   cy +  40],
+    lfoot:     [cx - 35,   cy + 130],
+    rknee:     [cx + 25,   cy +  40],
+    rfoot:     [cx + 35,   cy + 130],
+  };
+}
+let pose = makePose(W/2, H/2 + 30);
+
+const BONES = [
+  ['head','neck'],
+  ['neck','hips'],
+  ['neck','lshoulder'], ['lshoulder','lelbow'], ['lelbow','lhand'],
+  ['neck','rshoulder'], ['rshoulder','relbow'], ['relbow','rhand'],
+  ['hips','lknee'], ['lknee','lfoot'],
+  ['hips','rknee'], ['rknee','rfoot'],
+];
+const HANDLE_COLORS = {
+  head:'#fbbf24', neck:'#1f1147', hips:'#1f1147',
+  lshoulder:'#06b6d4', rshoulder:'#06b6d4',
+  lelbow:'#06b6d4', relbow:'#06b6d4',
+  lhand:'#ec4899', rhand:'#ec4899',
+  lknee:'#84cc16', rknee:'#84cc16',
+  lfoot:'#7c3aed', rfoot:'#7c3aed',
+};
+
+function render(playPose=null){
+  const p = playPose || pose;
+  ctx.clearRect(0,0,W,H);
+  // floor line
+  ctx.strokeStyle = '#1f1147'; ctx.lineWidth = 3;
+  ctx.setLineDash([8,8]);
+  ctx.beginPath(); ctx.moveTo(0, H-40); ctx.lineTo(W, H-40); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // bones
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 14;
+  ctx.lineCap = 'round';
+  for (const [a,b] of BONES){
+    ctx.beginPath();
+    ctx.moveTo(p[a][0], p[a][1]);
+    ctx.lineTo(p[b][0], p[b][1]);
+    ctx.stroke();
+  }
+  // head
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(p.head[0], p.head[1], 36, 0, Math.PI*2); ctx.fill();
+  // face
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(p.head[0]-12, p.head[1]-4, 5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(p.head[0]+12, p.head[1]-4, 5, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#1f1147';
+  ctx.beginPath(); ctx.arc(p.head[0]-12, p.head[1]-4, 2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(p.head[0]+12, p.head[1]-4, 2, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(p.head[0], p.head[1]+8, 10, 0, Math.PI);
+  ctx.stroke();
+
+  if (!playPose){
+    // handles
+    for (const k in p){
+      if (k==='neck' || k==='hips') continue;
+      ctx.fillStyle = HANDLE_COLORS[k];
+      ctx.strokeStyle = '#1f1147'; ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(p[k][0], p[k][1], 10, 0, Math.PI*2);
+      ctx.fill(); ctx.stroke();
+    }
+  }
+}
+
+// drag
+let drag = null;
+function getPos(e){
+  const r = stage.getBoundingClientRect();
+  const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+  const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+  return [x*(W/r.width), y*(H/r.height)];
+}
+stage.addEventListener('mousedown', e=>{ e.preventDefault(); pick(getPos(e)); });
+stage.addEventListener('touchstart', e=>{ e.preventDefault(); pick(getPos(e)); }, {passive:false});
+function pick([x,y]){
+  let best=null, bd=20;
+  for (const k in pose){
+    if (k==='neck'||k==='hips') continue;
+    const dx=x-pose[k][0], dy=y-pose[k][1];
+    const d=Math.sqrt(dx*dx+dy*dy);
+    if (d<bd){ bd=d; best=k; }
+  }
+  // also allow dragging the head with bigger radius (it's a big circle)
+  if (!best){
+    const dx=x-pose.head[0], dy=y-pose.head[1];
+    if (Math.sqrt(dx*dx+dy*dy) < 36) best = 'head';
+  }
+  drag = best;
+}
+window.addEventListener('mousemove', e=>{ if (drag) move(getPos(e)); });
+window.addEventListener('touchmove', e=>{ if (drag){ e.preventDefault(); move(getPos(e)); } }, {passive:false});
+function move([x,y]){
+  pose[drag] = [Math.max(0,Math.min(W,x)), Math.max(0,Math.min(H,y))];
+  render();
+}
+window.addEventListener('mouseup', ()=> drag=null);
+window.addEventListener('touchend', ()=> drag=null);
+
+// presets
+const PRESETS = {
+  stand: cx => makePose(cx, H/2 + 30),
+  wave: cx => {
+    const p = makePose(cx, H/2 + 30);
+    p.rshoulder = [cx+35, cy(p)-130]; p.relbow=[cx+90, cy(p)-180]; p.rhand=[cx+110, cy(p)-250];
+    return p;
+  },
+  jump: cx => {
+    const p = makePose(cx, H/2);
+    // arms up, legs together
+    p.lshoulder=[cx-35,cy(p)-130]; p.lelbow=[cx-50,cy(p)-200]; p.lhand=[cx-70,cy(p)-270];
+    p.rshoulder=[cx+35,cy(p)-130]; p.relbow=[cx+50,cy(p)-200]; p.rhand=[cx+70,cy(p)-270];
+    p.lknee=[cx-15,cy(p)+30]; p.lfoot=[cx-20,cy(p)+110];
+    p.rknee=[cx+15,cy(p)+30]; p.rfoot=[cx+20,cy(p)+110];
+    return p;
+  },
+  run: cx => {
+    const p = makePose(cx, H/2 + 20);
+    p.lelbow=[cx-65,cy(p)-110]; p.lhand=[cx-30,cy(p)-60];
+    p.relbow=[cx+65,cy(p)-50];  p.rhand=[cx+90,cy(p)+10];
+    p.lknee=[cx-50,cy(p)+30]; p.lfoot=[cx-90,cy(p)+90];
+    p.rknee=[cx+15,cy(p)+60]; p.rfoot=[cx+50,cy(p)+120];
+    return p;
+  },
+  dance: cx => {
+    const p = makePose(cx, H/2 + 30);
+    p.lshoulder=[cx-35,cy(p)-130]; p.lelbow=[cx-90,cy(p)-180]; p.lhand=[cx-130,cy(p)-220];
+    p.rshoulder=[cx+35,cy(p)-130]; p.relbow=[cx+95,cy(p)-100]; p.rhand=[cx+140,cy(p)-50];
+    p.lknee=[cx-30,cy(p)+50]; p.lfoot=[cx-65,cy(p)+120];
+    p.rknee=[cx+45,cy(p)+30]; p.rfoot=[cx+90,cy(p)+100];
+    return p;
+  },
+  sit: cx => {
+    const p = makePose(cx, H/2 + 80);
+    p.lknee=[cx-30, cy(p)+10]; p.lfoot=[cx-90, cy(p)+20];
+    p.rknee=[cx+30, cy(p)+10]; p.rfoot=[cx+90, cy(p)+20];
+    p.relbow=[cx+45,cy(p)-80]; p.rhand=[cx+60,cy(p)-30];
+    p.lelbow=[cx-45,cy(p)-80]; p.lhand=[cx-60,cy(p)-30];
+    return p;
+  },
+};
+function cy(p){ return p.hips[1]+40 } // helper: get the "ground" reference of a baseline pose
+document.querySelectorAll('[data-pose]').forEach(b=>{
+  b.onclick = ()=>{
+    pose = PRESETS[b.dataset.pose](W/2);
+    render();
+  };
+});
+
+// pose frames (keyframes)
+const poses = [];
+const framesBar = document.getElementById('frames');
+
+function snapshot(){
+  return JSON.parse(JSON.stringify(pose));
+}
+function thumbOf(p){
+  const c = document.createElement('canvas');
+  c.width = 80; c.height = 60;
+  const cx = c.getContext('2d');
+  cx.fillStyle = '#fff'; cx.fillRect(0,0,80,60);
+  // scale: stage 900x560 -> 80x60
+  const sx = 80/W, sy = 60/H;
+  cx.strokeStyle = color; cx.lineWidth = 2; cx.lineCap='round';
+  for (const [a,b] of BONES){
+    cx.beginPath();
+    cx.moveTo(p[a][0]*sx, p[a][1]*sy);
+    cx.lineTo(p[b][0]*sx, p[b][1]*sy);
+    cx.stroke();
+  }
+  cx.fillStyle = color;
+  cx.beginPath(); cx.arc(p.head[0]*sx, p.head[1]*sy, 5, 0, Math.PI*2); cx.fill();
+  return c;
+}
+function rebuildPoseBar(){
+  framesBar.innerHTML = '';
+  poses.forEach((p,i)=>{
+    const t = document.createElement('div');
+    t.className = 'frame-thumb';
+    t.appendChild(thumbOf(p));
+    const num = document.createElement('div');
+    num.className = 'num'; num.textContent = i+1;
+    t.appendChild(num);
+    const x = document.createElement('div');
+    x.className = 'x'; x.textContent = '×';
+    x.onclick = ev => { ev.stopPropagation(); poses.splice(i,1); rebuildPoseBar(); };
+    t.appendChild(x);
+    t.onclick = ()=>{ pose = JSON.parse(JSON.stringify(p)); render(); };
+    framesBar.appendChild(t);
+  });
+}
+document.getElementById('addPose').onclick = ()=>{ poses.push(snapshot()); rebuildPoseBar(); };
+document.getElementById('clearPoses').onclick = ()=>{ poses.length = 0; rebuildPoseBar(); };
+
+// playback
+let fps = 6;
+document.getElementById('fps').oninput = e=>{
+  fps = +e.target.value; document.getElementById('fpsLabel').textContent = fps;
+};
+let playTimer = null;
+document.getElementById('playBtn').onclick = ()=>{
+  if (playTimer || poses.length === 0) return;
+  let i = 0;
+  playTimer = setInterval(()=>{
+    render(poses[i]);
+    i = (i+1) % poses.length;
+  }, 1000/fps);
+};
+document.getElementById('stopBtn').onclick = ()=>{
+  if (playTimer){ clearInterval(playTimer); playTimer = null; render(); }
+};
+
+// init: drop a couple of demo poses so the play button isn't lonely
+poses.push(PRESETS.stand(W/2));
+poses.push(PRESETS.wave(W/2));
+rebuildPoseBar();
+render();
+</script>
+</body>
+</html>

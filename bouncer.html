@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Bouncer — ToonLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏀</text></svg>" />
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="brand"><span class="logo"></span> ToonLab</a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="movie.html">Movie</a>
+    <a href="flipbook.html">Flipbook</a>
+    <a href="bouncer.html" class="active">Bouncer</a>
+    <a href="stickman.html">Stickman</a>
+    <a href="learn.html">Learn</a>
+    <a href="quiz.html">Quiz</a>
+  </div>
+</nav>
+
+<div class="page">
+  <section class="banner">
+    <span class="float f1">🏀</span>
+    <span class="float f2">⭐</span>
+    <span class="float f3">⚡</span>
+    <h1>🏀 Bouncer Studio</h1>
+    <p>Drop a shape, drag its <strong>START</strong> dot, click <em>Set End</em>, drag the <strong>END</strong>. Hit ▶ Play — the computer fills in the missing in-between frames. That's called <strong>tweening!</strong></p>
+  </section>
+
+  <div class="studio">
+    <aside class="panel">
+      <h2>Toy box</h2>
+
+      <div class="group">
+        <label>Add a shape</label>
+        <div class="button-row">
+          <button class="btn small pink" data-add="circle">⚪ Ball</button>
+          <button class="btn small blue" data-add="square">🟦 Box</button>
+          <button class="btn small green" data-add="triangle">🔺 Wedge</button>
+          <button class="btn small purple" data-add="star">⭐ Star</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <label>Selected shape</label>
+        <div id="selInfo" style="font-weight:700; font-size:13px">None — click a shape on the stage</div>
+        <div class="button-row" style="margin-top:8px">
+          <button class="btn small ghost" id="setStart">📍 Set Start</button>
+          <button class="btn small ghost" id="setEnd">🎯 Set End</button>
+        </div>
+        <div class="button-row" style="margin-top:8px">
+          <button class="btn small ghost" id="delShape">🗑 Delete</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <label>Color</label>
+        <div class="swatches" id="swatches"></div>
+      </div>
+
+      <div class="group">
+        <label>Easing (how it moves)</label>
+        <select id="easing" class="btn ghost small" style="width:100%">
+          <option value="linear">Steady (linear)</option>
+          <option value="easeOut" selected>Slow stop (ease out)</option>
+          <option value="easeIn">Slow start (ease in)</option>
+          <option value="bounce">Bouncy!</option>
+          <option value="elastic">Boingy elastic</option>
+        </select>
+      </div>
+
+      <div class="group">
+        <label>Speed: <span id="durLabel">1.5</span> sec</label>
+        <input type="range" id="dur" min="0.4" max="4" step="0.1" value="1.5" style="width:100%" />
+      </div>
+
+      <div class="group">
+        <div class="button-row">
+          <button class="btn pink" id="playBtn" data-sound="ding" data-confetti>▶ Play</button>
+          <button class="btn ghost" id="stopBtn" data-sound="boop">⏹ Stop</button>
+        </div>
+        <div class="button-row" style="margin-top:8px">
+          <label style="font-size:13px; font-weight:700; display:flex; align-items:center; gap:6px">
+            <input type="checkbox" id="loopChk" checked /> Loop forever
+          </label>
+        </div>
+      </div>
+    </aside>
+
+    <section class="panel stage-wrap">
+      <canvas id="stage" class="stage" width="900" height="560"></canvas>
+      <div class="frames" style="display:block">
+        <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap">
+          <strong style="font-family:'Fredoka',sans-serif; font-size:20px">How it works</strong>
+          <span>1) Add a shape</span>
+          <span>→ 2) Drag to START</span>
+          <span>→ 3) Click <em>Set End</em>, drag to END</span>
+          <span>→ 4) ▶ Play!</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="tip-strip">
+    <span class="ico">⚡</span>
+    <div><strong>Animator secret:</strong> Real motion isn't steady. Things <em>speed up</em> then <em>slow down</em>. Try the "Slow stop" or "Bouncy" easing to see what we mean!</div>
+  </div>
+</div>
+
+<footer>Tween = "in-between." Now you know.</footer>
+
+<script src="fx.js"></script>
+<script>
+const stage = document.getElementById('stage');
+const ctx = stage.getContext('2d');
+const COLORS = ['#ec4899','#06b6d4','#84cc16','#fbbf24','#7c3aed','#fb923c','#1f1147'];
+
+let color = COLORS[0];
+let mode = 'start'; // start or end (which position you're moving)
+let dur = 1.5;
+let loop = true;
+let easing = 'easeOut';
+
+// build swatches
+const sw = document.getElementById('swatches');
+COLORS.forEach((c,i)=>{
+  const el = document.createElement('div');
+  el.className = 'swatch' + (i===0 ? ' active':'');
+  el.style.background = c;
+  el.onclick = ()=>{
+    color = c;
+    document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));
+    el.classList.add('active');
+    if (selected){ selected.color = color; render(); }
+  };
+  sw.appendChild(el);
+});
+
+document.getElementById('dur').oninput = e=>{
+  dur = +e.target.value;
+  document.getElementById('durLabel').textContent = dur.toFixed(1);
+};
+document.getElementById('easing').onchange = e=>easing = e.target.value;
+document.getElementById('loopChk').onchange = e=>loop = e.target.checked;
+
+const shapes = [];
+let selected = null;
+
+document.querySelectorAll('[data-add]').forEach(b=>{
+  b.onclick = ()=>{
+    const kind = b.dataset.add;
+    const s = {
+      kind, color,
+      start: { x: 150, y: 280 },
+      end:   { x: 750, y: 280 },
+      size: 60,
+    };
+    shapes.push(s);
+    selected = s;
+    mode = 'start';
+    updateSel();
+    render();
+  };
+});
+
+function updateSel(){
+  const info = document.getElementById('selInfo');
+  if (!selected){ info.textContent = 'None — click a shape on the stage'; return; }
+  info.innerHTML = `Editing <strong>${selected.kind}</strong> — moving the <strong>${mode === 'start' ? 'START 📍' : 'END 🎯'}</strong> position`;
+  document.getElementById('setStart').classList.toggle('pink', mode==='start');
+  document.getElementById('setStart').classList.toggle('ghost', mode!=='start');
+  document.getElementById('setEnd').classList.toggle('pink', mode==='end');
+  document.getElementById('setEnd').classList.toggle('ghost', mode!=='end');
+}
+document.getElementById('setStart').onclick = ()=>{ mode='start'; updateSel(); };
+document.getElementById('setEnd').onclick   = ()=>{ mode='end';   updateSel(); };
+document.getElementById('delShape').onclick = ()=>{
+  if (!selected) return;
+  const i = shapes.indexOf(selected);
+  shapes.splice(i,1); selected = null; updateSel(); render();
+};
+
+// drawing
+function drawShape(s, pos, ghost=false){
+  ctx.save();
+  ctx.globalAlpha = ghost ? 0.35 : 1;
+  ctx.fillStyle = s.color;
+  ctx.strokeStyle = '#1f1147';
+  ctx.lineWidth = 4;
+  const x = pos.x, y = pos.y, r = s.size;
+  if (s.kind === 'circle'){
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  } else if (s.kind === 'square'){
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x-r,y-r,r*2,r*2,12) : ctx.rect(x-r,y-r,r*2,r*2);
+    ctx.fill(); ctx.stroke();
+  } else if (s.kind === 'triangle'){
+    ctx.beginPath(); ctx.moveTo(x, y-r); ctx.lineTo(x+r, y+r); ctx.lineTo(x-r, y+r);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  } else if (s.kind === 'star'){
+    star(x,y,5,r,r/2); ctx.fill(); ctx.stroke();
+  }
+  ctx.restore();
+}
+function star(cx,cy,spikes,outer,inner){
+  let rot = Math.PI/2*3, x=cx, y=cy, step = Math.PI/spikes;
+  ctx.beginPath(); ctx.moveTo(cx, cy-outer);
+  for(let i=0;i<spikes;i++){
+    x = cx + Math.cos(rot)*outer; y = cy + Math.sin(rot)*outer; ctx.lineTo(x,y); rot += step;
+    x = cx + Math.cos(rot)*inner; y = cy + Math.sin(rot)*inner; ctx.lineTo(x,y); rot += step;
+  }
+  ctx.lineTo(cx, cy-outer); ctx.closePath();
+}
+
+function render(progress=null){
+  ctx.clearRect(0,0,stage.width,stage.height);
+  // grid
+  shapes.forEach(s=>{
+    if (progress === null){
+      // editor: show start & end + arrow
+      drawShape(s, s.start, false);
+      drawShape(s, s.end,   true);
+      // arrow
+      ctx.strokeStyle = '#1f1147';
+      ctx.lineWidth = 3; ctx.setLineDash([8,6]);
+      ctx.beginPath(); ctx.moveTo(s.start.x, s.start.y); ctx.lineTo(s.end.x, s.end.y); ctx.stroke();
+      ctx.setLineDash([]);
+      // start/end labels
+      ctx.fillStyle = '#1f1147';
+      ctx.font = 'bold 14px Fredoka, sans-serif';
+      ctx.fillText('START', s.start.x - 22, s.start.y - s.size - 8);
+      ctx.fillText('END',   s.end.x   - 14, s.end.y   - s.size - 8);
+      if (s === selected){
+        const pos = mode==='start' ? s.start : s.end;
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 4; ctx.setLineDash([4,4]);
+        ctx.beginPath(); ctx.arc(pos.x, pos.y, s.size+10, 0, Math.PI*2); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    } else {
+      const t = ease(progress, easing);
+      const pos = { x: lerp(s.start.x, s.end.x, t), y: lerp(s.start.y, s.end.y, t) };
+      drawShape(s, pos);
+    }
+  });
+}
+function lerp(a,b,t){ return a + (b-a)*t }
+function ease(t, kind){
+  switch(kind){
+    case 'linear': return t;
+    case 'easeOut': return 1 - Math.pow(1-t, 3);
+    case 'easeIn': return t*t*t;
+    case 'bounce': {
+      const n=7.5625, d=2.75;
+      if (t < 1/d) return n*t*t;
+      if (t < 2/d){ t-=1.5/d; return n*t*t + 0.75; }
+      if (t < 2.5/d){ t-=2.25/d; return n*t*t + 0.9375; }
+      t-=2.625/d; return n*t*t + 0.984375;
+    }
+    case 'elastic': {
+      if (t===0||t===1) return t;
+      const p=0.3;
+      return Math.pow(2,-10*t) * Math.sin((t-p/4)*(2*Math.PI)/p) + 1;
+    }
+  }
+  return t;
+}
+
+// interaction: click + drag
+let dragging = false;
+function pos(e){
+  const r = stage.getBoundingClientRect();
+  const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+  const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+  return { x: x*(stage.width/r.width), y: y*(stage.height/r.height) };
+}
+function hit(p, s){
+  // hit either start or end ring
+  const candidates = [{kind:'start', pt:s.start},{kind:'end', pt:s.end}];
+  for (const c of candidates){
+    const dx = p.x-c.pt.x, dy = p.y-c.pt.y;
+    if (Math.sqrt(dx*dx+dy*dy) <= s.size+12) return c.kind;
+  }
+  return null;
+}
+stage.addEventListener('mousedown', startDrag);
+stage.addEventListener('touchstart', startDrag, {passive:false});
+function startDrag(e){
+  if (playing) return;
+  e.preventDefault();
+  const p = pos(e);
+  // pick a shape - check from top
+  let picked = null, pickedKind = null;
+  for (let i = shapes.length-1; i>=0; i--){
+    const k = hit(p, shapes[i]);
+    if (k){ picked = shapes[i]; pickedKind = k; break; }
+  }
+  if (picked){
+    selected = picked;
+    mode = pickedKind;
+    dragging = true;
+    updateSel();
+    render();
+  } else {
+    selected = null; updateSel(); render();
+  }
+}
+window.addEventListener('mousemove', drag);
+window.addEventListener('touchmove', drag, {passive:false});
+function drag(e){
+  if (!dragging || !selected) return;
+  e.preventDefault();
+  const p = pos(e);
+  selected[mode] = { x: clamp(p.x, 0, stage.width), y: clamp(p.y, 0, stage.height) };
+  render();
+}
+window.addEventListener('mouseup', ()=> dragging=false);
+window.addEventListener('touchend', ()=> dragging=false);
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+// playback
+let playing = null;
+document.getElementById('playBtn').onclick = ()=>{
+  if (playing) return;
+  const t0 = performance.now();
+  function frame(now){
+    const elapsed = (now - t0)/1000;
+    let p = elapsed / dur;
+    if (p >= 1){
+      if (loop){ p = p % 1; }
+      else { render(1); playing = null; return; }
+    }
+    render(p);
+    playing = requestAnimationFrame(frame);
+  }
+  playing = requestAnimationFrame(frame);
+};
+document.getElementById('stopBtn').onclick = ()=>{
+  if (playing){ cancelAnimationFrame(playing); playing = null; render(); }
+};
+
+// initial demo
+shapes.push({ kind:'circle', color:'#ec4899', start:{x:150,y:120}, end:{x:750,y:460}, size:50 });
+selected = shapes[0]; updateSel(); render();
+</script>
+</body>
+</html>

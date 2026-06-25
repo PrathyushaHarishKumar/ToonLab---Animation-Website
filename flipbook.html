@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Flipbook — ToonLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📒</text></svg>" />
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="brand"><span class="logo"></span> ToonLab</a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="movie.html">Movie</a>
+    <a href="flipbook.html" class="active">Flipbook</a>
+    <a href="bouncer.html">Bouncer</a>
+    <a href="stickman.html">Stickman</a>
+    <a href="learn.html">Learn</a>
+    <a href="quiz.html">Quiz</a>
+  </div>
+</nav>
+
+<div class="page">
+  <section class="banner">
+    <span class="float f1">📒</span>
+    <span class="float f2">✏️</span>
+    <span class="float f3">✨</span>
+    <h1>📒 Flipbook Studio</h1>
+    <p>Draw a tiny picture, then add a new frame and draw it <em>almost</em> the same — but a little different. Press ▶ Play and your drawing comes <strong>ALIVE!</strong></p>
+  </section>
+
+  <div class="studio">
+    <!-- TOOLBAR -->
+    <aside class="panel">
+      <h2>Tools</h2>
+
+      <div class="group">
+        <label>Color</label>
+        <div class="swatches" id="swatches"></div>
+      </div>
+
+      <div class="group">
+        <label>Brush size: <span id="sizeLabel">6</span> px</label>
+        <div class="slider-row">
+          <input type="range" id="size" min="1" max="40" value="6" />
+        </div>
+      </div>
+
+      <div class="group">
+        <label>Mode</label>
+        <div class="button-row">
+          <button class="btn small ghost" id="brushBtn" data-mode="brush">✏️ Brush</button>
+          <button class="btn small ghost" id="eraseBtn" data-mode="erase">🧽 Eraser</button>
+        </div>
+        <div class="button-row" style="margin-top:8px">
+          <button class="btn small ghost" id="clearBtn">🗑 Clear frame</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <label>Onion skin</label>
+        <div class="button-row">
+          <button class="btn small ghost" id="onionBtn">👀 OFF</button>
+        </div>
+        <p style="font-size:12px; margin:6px 0 0">Shows a ghost of the last frame so you know what to draw next!</p>
+      </div>
+
+      <div class="group">
+        <label>Speed: <span id="fpsLabel">8</span> fps</label>
+        <div class="slider-row">
+          <input type="range" id="fps" min="1" max="24" value="8" />
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="button-row">
+          <button class="btn pink" id="playBtn" data-sound="ding">▶ Play</button>
+          <button class="btn ghost" id="stopBtn" data-sound="boop">⏹ Stop</button>
+        </div>
+        <div class="button-row" style="margin-top:8px">
+          <button class="btn small blue" id="saveBtn" data-sound="fanfare" data-confetti>💾 Save PNG</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- STAGE -->
+    <section class="panel stage-wrap">
+      <canvas id="stage" class="stage" width="900" height="560"></canvas>
+      <div class="frames" id="frames">
+        <button class="add-frame" id="addFrame" title="Add new frame">+</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="tip-strip">
+    <span class="ico">💡</span>
+    <div><strong>Pro tip:</strong> Turn on onion skin so you can see your last drawing faintly behind your new one — that's how real Disney animators work!</div>
+  </div>
+</div>
+
+<footer>Drawing is a superpower. Keep going!</footer>
+
+<script src="fx.js"></script>
+<script>
+/* ---------------- Flipbook Studio ---------------- */
+const stage = document.getElementById('stage');
+const ctx = stage.getContext('2d');
+const framesBar = document.getElementById('frames');
+const addBtn = document.getElementById('addFrame');
+
+const COLORS = ['#1f1147','#ec4899','#7c3aed','#06b6d4','#84cc16','#fbbf24','#fb923c','#ffffff'];
+let color = COLORS[0];
+let size = 6;
+let mode = 'brush';
+let onion = false;
+let fps = 8;
+let drawing = false;
+let last = null;
+
+const frames = [];      // array of ImageData
+let current = 0;
+
+// build swatches
+const sw = document.getElementById('swatches');
+COLORS.forEach((c,i)=>{
+  const el = document.createElement('div');
+  el.className = 'swatch' + (i===0 ? ' active':'');
+  el.style.background = c;
+  el.onclick = ()=>{
+    color = c; mode='brush';
+    document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));
+    el.classList.add('active');
+    setMode('brush');
+  };
+  sw.appendChild(el);
+});
+
+document.getElementById('size').oninput = e => {
+  size = +e.target.value; document.getElementById('sizeLabel').textContent = size;
+};
+document.getElementById('fps').oninput = e => {
+  fps = +e.target.value; document.getElementById('fpsLabel').textContent = fps;
+};
+
+function setMode(m){
+  mode = m;
+  document.getElementById('brushBtn').classList.toggle('pink', m==='brush');
+  document.getElementById('brushBtn').classList.toggle('ghost', m!=='brush');
+  document.getElementById('eraseBtn').classList.toggle('pink', m==='erase');
+  document.getElementById('eraseBtn').classList.toggle('ghost', m!=='erase');
+}
+document.getElementById('brushBtn').onclick = ()=>setMode('brush');
+document.getElementById('eraseBtn').onclick = ()=>setMode('erase');
+document.getElementById('clearBtn').onclick = ()=>{
+  ctx.clearRect(0,0,stage.width,stage.height);
+  storeCurrent();
+};
+document.getElementById('onionBtn').onclick = e => {
+  onion = !onion;
+  e.target.textContent = onion ? '👀 ON' : '👀 OFF';
+  e.target.classList.toggle('pink', onion);
+  e.target.classList.toggle('ghost', !onion);
+  redraw();
+};
+
+// drawing
+function pos(e){
+  const r = stage.getBoundingClientRect();
+  const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+  const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+  return { x: x * (stage.width / r.width), y: y * (stage.height / r.height) };
+}
+function start(e){ e.preventDefault(); drawing = true; last = pos(e); dot(last); }
+function move(e){ if(!drawing) return; e.preventDefault(); const p = pos(e); line(last, p); last = p; }
+function end(){ if(drawing){ drawing = false; storeCurrent(); } }
+function dot(p){
+  ctx.globalCompositeOperation = mode==='erase' ? 'destination-out' : 'source-over';
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, size/2, 0, Math.PI*2);
+  ctx.fill();
+}
+function line(a,b){
+  ctx.globalCompositeOperation = mode==='erase' ? 'destination-out' : 'source-over';
+  ctx.strokeStyle = color;
+  ctx.lineWidth = size;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.stroke();
+}
+stage.addEventListener('mousedown', start);
+stage.addEventListener('mousemove', move);
+window.addEventListener('mouseup', end);
+stage.addEventListener('touchstart', start, {passive:false});
+stage.addEventListener('touchmove', move, {passive:false});
+stage.addEventListener('touchend', end);
+
+// frames
+function newFrame(){
+  const blank = ctx.createImageData(stage.width, stage.height);
+  frames.push(blank);
+  current = frames.length - 1;
+  redraw();
+  rebuildThumbs();
+}
+function storeCurrent(){
+  frames[current] = ctx.getImageData(0,0,stage.width,stage.height);
+  updateThumb(current);
+}
+function redraw(){
+  ctx.clearRect(0,0,stage.width,stage.height);
+  if(onion && current > 0){
+    ctx.globalAlpha = 0.28;
+    ctx.putImageData(frames[current-1], 0, 0);
+    ctx.globalAlpha = 1;
+    // blend the current frame on top
+    const tmp = document.createElement('canvas');
+    tmp.width = stage.width; tmp.height = stage.height;
+    tmp.getContext('2d').putImageData(frames[current], 0, 0);
+    ctx.drawImage(tmp, 0, 0);
+  } else {
+    ctx.putImageData(frames[current], 0, 0);
+  }
+}
+function selectFrame(i){
+  storeCurrent();
+  current = i;
+  redraw();
+  document.querySelectorAll('.frame-thumb').forEach(t => t.classList.remove('active'));
+  const el = document.querySelector(`.frame-thumb[data-i="${i}"]`);
+  if (el) el.classList.add('active');
+}
+function rebuildThumbs(){
+  // remove all but add button
+  framesBar.querySelectorAll('.frame-thumb').forEach(n => n.remove());
+  frames.forEach((_,i)=>{
+    const t = document.createElement('div');
+    t.className = 'frame-thumb' + (i===current ? ' active':'');
+    t.dataset.i = i;
+    const c = document.createElement('canvas');
+    c.width = 80; c.height = 60;
+    t.appendChild(c);
+    if (frames.length > 1){
+      const x = document.createElement('div');
+      x.className = 'x'; x.textContent = '×';
+      x.onclick = ev => { ev.stopPropagation(); deleteFrame(i); };
+      t.appendChild(x);
+    }
+    const num = document.createElement('div');
+    num.className = 'num';
+    num.textContent = i+1;
+    t.appendChild(num);
+    t.onclick = ()=> selectFrame(i);
+    framesBar.insertBefore(t, addBtn);
+    updateThumb(i);
+  });
+}
+function updateThumb(i){
+  const t = document.querySelector(`.frame-thumb[data-i="${i}"]`);
+  if (!t) return;
+  const c = t.querySelector('canvas');
+  const cx = c.getContext('2d');
+  cx.clearRect(0,0,c.width,c.height);
+  cx.fillStyle = '#fff';
+  cx.fillRect(0,0,c.width,c.height);
+  const tmp = document.createElement('canvas');
+  tmp.width = stage.width; tmp.height = stage.height;
+  tmp.getContext('2d').putImageData(frames[i] || ctx.createImageData(stage.width,stage.height), 0, 0);
+  cx.drawImage(tmp, 0, 0, c.width, c.height);
+}
+function deleteFrame(i){
+  if (frames.length <= 1) return;
+  frames.splice(i,1);
+  if (current >= frames.length) current = frames.length-1;
+  rebuildThumbs(); redraw();
+}
+addBtn.onclick = ()=>{ storeCurrent(); newFrame(); if(window.ToonFX){ ToonFX.sounds.pop(); ToonFX.toast('Frame added! Now draw it a little different.', '📒'); } };
+
+// playback
+let playing = null;
+document.getElementById('playBtn').onclick = ()=>{
+  if (playing) return;
+  storeCurrent();
+  let i = 0;
+  const playStage = ctx;
+  playing = setInterval(()=>{
+    playStage.clearRect(0,0,stage.width,stage.height);
+    playStage.putImageData(frames[i], 0, 0);
+    i = (i+1) % frames.length;
+  }, 1000/fps);
+};
+document.getElementById('stopBtn').onclick = ()=>{
+  if (playing){ clearInterval(playing); playing = null; redraw(); }
+};
+
+document.getElementById('saveBtn').onclick = ()=>{
+  storeCurrent();
+  // export current frame
+  const a = document.createElement('a');
+  a.download = 'toonlab-frame-' + (current+1) + '.png';
+  // need white background
+  const tmp = document.createElement('canvas');
+  tmp.width = stage.width; tmp.height = stage.height;
+  const tx = tmp.getContext('2d');
+  tx.fillStyle = '#fff';
+  tx.fillRect(0,0,tmp.width,tmp.height);
+  tx.putImageData(frames[current],0,0);
+  // putImageData ignores existing pixels; redraw with drawImage instead
+  tx.clearRect(0,0,tmp.width,tmp.height);
+  tx.fillStyle = '#fff'; tx.fillRect(0,0,tmp.width,tmp.height);
+  const layer = document.createElement('canvas');
+  layer.width = stage.width; layer.height = stage.height;
+  layer.getContext('2d').putImageData(frames[current],0,0);
+  tx.drawImage(layer,0,0);
+  a.href = tmp.toDataURL('image/png');
+  a.click();
+};
+
+setMode('brush');
+newFrame(); // start with one blank frame
+</script>
+</body>
+</html>

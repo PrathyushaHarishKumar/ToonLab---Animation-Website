@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Movie Maker — ToonLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>" />
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="brand"><span class="logo"></span> ToonLab</a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="movie.html" class="active">Movie</a>
+    <a href="flipbook.html">Flipbook</a>
+    <a href="bouncer.html">Bouncer</a>
+    <a href="stickman.html">Stickman</a>
+    <a href="learn.html">Learn</a>
+    <a href="quiz.html">Quiz</a>
+  </div>
+</nav>
+
+<div class="page">
+  <section class="banner">
+    <span class="float f1">🎬</span>
+    <span class="float f2">🎞️</span>
+    <span class="float f3">⭐</span>
+    <h1>🎬 Movie Maker Studio</h1>
+    <p>Build your own mini-movie like a real animation director! Pick a magical world, drag characters around, write what they say, then snap a new scene and move them again. Press ▶ Play Movie and your story comes <strong>ALIVE</strong> with a title card, music, and "The End"!</p>
+  </section>
+
+  <div class="movie-studio">
+
+    <!-- LEFT PANEL: pick stuff -->
+    <aside class="panel">
+      <h2>🎬 Title</h2>
+      <input id="title" type="text" value="My Magical Adventure" maxlength="40"
+        style="width:100%; padding:10px 14px; border:3px solid var(--ink); border-radius:14px; font-family:'Fredoka',sans-serif; font-weight:700; font-size:16px; box-shadow:0 3px 0 var(--ink); margin-bottom:16px"/>
+
+      <h2>🌅 World</h2>
+      <div class="bg-grid" id="bgGrid" style="margin-bottom:16px"></div>
+
+      <h2>👥 Characters</h2>
+      <p style="font-size:12px; font-weight:700; margin:0 0 8px; color:#5b3da4">Click to add to your scene!</p>
+      <div class="cast-grid" id="castGrid" style="margin-bottom:16px"></div>
+
+      <h2>🌸 Props</h2>
+      <div class="cast-grid" id="propGrid"></div>
+    </aside>
+
+    <!-- MIDDLE: the stage -->
+    <section class="stage-col">
+      <div class="movie-stage" id="movieStage">
+        <div class="bg" id="bgLayer"></div>
+        <div class="decor" id="decorLayer"></div>
+        <div class="items" id="itemsLayer"></div>
+        <div class="movieMode" id="movieMode">
+          <div class="bar top"></div>
+          <div class="bar bottom"></div>
+        </div>
+        <div class="titleCard" id="titleCard"><div class="tc-text" id="tcText"></div></div>
+      </div>
+
+      <div class="selected-bar">
+        <span style="font-weight:800">Selected:</span>
+        <strong id="selName" style="font-family:Fredoka,sans-serif; font-size:22px">— click a character —</strong>
+        <label>Size <input type="range" id="selSize" min="40" max="220" value="100" /></label>
+        <label>↔️ <input type="checkbox" id="selFlip" /></label>
+        <input type="text" id="selSpeech" placeholder="💬 What do they say? (leave blank for nothing)" />
+        <button class="btn small ghost" id="selDelete" data-sound="boop">🗑 Remove</button>
+      </div>
+
+      <div class="scenes-bar" id="scenesBar"></div>
+    </section>
+
+    <!-- RIGHT PANEL: scene + movie controls -->
+    <aside class="panel">
+      <h2>🎞️ Scene</h2>
+      <p style="font-size:13px; font-weight:700; margin:0 0 10px">
+        Drag your characters where you want them, then snap a new scene and move them to where they should END up. The computer fills in the in-between!
+      </p>
+      <button class="btn green big" id="addScene" data-sound="pop" data-confetti style="width:100%; margin-bottom:10px">📸 Snap New Scene</button>
+
+      <label style="font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:1.5px; color:#5b3da4; display:block">
+        Scene length: <span id="durLabel">2.0</span>s
+      </label>
+      <input type="range" id="durSlider" min="0.5" max="6" step="0.5" value="2" style="width:100%; margin-bottom:18px"/>
+
+      <h2>🎵 Soundtrack</h2>
+      <select id="music" style="margin-bottom:18px">
+        <option value="">🔇 No music</option>
+        <option value="happy" selected>😊 Happy</option>
+        <option value="adventure">⚔️ Adventure</option>
+        <option value="mystery">🔮 Mystery</option>
+        <option value="dance">💃 Dance Party</option>
+        <option value="lullaby">🌙 Dreamy</option>
+      </select>
+
+      <h2>🎥 Roll the film!</h2>
+      <button class="btn rainbow big" id="playMovie" data-sound="fanfare" data-confetti style="width:100%; margin-bottom:8px">▶ Play Movie</button>
+      <button class="btn ghost" id="stopMovie" data-sound="boop" style="width:100%; margin-bottom:18px">⏹ Stop</button>
+
+      <h2>💾 Share</h2>
+      <button class="btn small blue" id="saveFrame" data-sound="ding" data-confetti style="width:100%">💾 Save this scene as PNG</button>
+    </aside>
+  </div>
+
+  <div class="tip-strip" style="margin-top:24px">
+    <span class="ico">🎬</span>
+    <div><strong>Director's secret:</strong> 3 scenes is plenty for a tiny movie! Scene 1: characters START somewhere. Scene 2: they MOVE. Scene 3: a big finish! Then hit ▶ Play Movie.</div>
+  </div>
+</div>
+
+<footer>You're the director, the writer, AND the cast. 🎬</footer>
+
+<script src="fx.js"></script>
+<script>
+/* ===================================================================
+   ToonLab Movie Maker
+   Original characters & scenes (no third-party IP).
+   =================================================================== */
+
+/* ---------- Backgrounds (gradient + decor) ---------- */
+const BACKGROUNDS = {
+  forest: {
+    name:'Forest', icon:'🌲',
+    gradient:[{p:0,c:'#b9e6ff'},{p:.6,c:'#b9e6ff'},{p:.62,c:'#6db86d'},{p:1,c:'#2d6b2d'}],
+    decor:[
+      {e:'☀️', x:84, y:14, s:54},
+      {e:'☁️', x:18, y:12, s:54},
+      {e:'☁️', x:54, y:20, s:42},
+      {e:'🌲', x:8,  y:70, s:90},
+      {e:'🌳', x:88, y:74, s:84},
+      {e:'🌳', x:42, y:82, s:64},
+      {e:'🍄', x:24, y:90, s:28},
+      {e:'🌸', x:70, y:92, s:24},
+    ],
+  },
+  castle: {
+    name:'Castle', icon:'🏰',
+    gradient:[{p:0,c:'#ffd6f1'},{p:.45,c:'#cdeaff'},{p:.7,c:'#a7d18c'},{p:1,c:'#5fa05f'}],
+    decor:[
+      {e:'🌤️', x:14, y:12, s:60},
+      {e:'☁️', x:78, y:10, s:50},
+      {e:'☁️', x:48, y:18, s:42},
+      {e:'🏰', x:50, y:60, s:140},
+      {e:'🌳', x:10, y:80, s:60},
+      {e:'🌳', x:90, y:82, s:60},
+      {e:'🌷', x:30, y:92, s:28},
+      {e:'🌷', x:68, y:92, s:28},
+    ],
+  },
+  sea: {
+    name:'Under the Sea', icon:'🌊',
+    gradient:[{p:0,c:'#7dd3fc'},{p:1,c:'#0c4a6e'}],
+    decor:[
+      {e:'🫧', x:14, y:24, s:30},
+      {e:'🫧', x:80, y:32, s:22},
+      {e:'🫧', x:52, y:18, s:26},
+      {e:'🫧', x:24, y:54, s:18},
+      {e:'🪸', x:12, y:90, s:54},
+      {e:'🪸', x:88, y:88, s:60},
+      {e:'🌿', x:40, y:92, s:42},
+      {e:'🐚', x:70, y:94, s:28},
+    ],
+  },
+  space: {
+    name:'Outer Space', icon:'🚀',
+    gradient:[{p:0,c:'#0b0030'},{p:1,c:'#1e0556'}],
+    decor:[
+      {e:'⭐', x:8,  y:10, s:24},
+      {e:'⭐', x:20, y:30, s:18},
+      {e:'⭐', x:78, y:20, s:22},
+      {e:'⭐', x:92, y:46, s:18},
+      {e:'⭐', x:48, y:14, s:16},
+      {e:'✨', x:34, y:54, s:30},
+      {e:'🌟', x:62, y:60, s:28},
+      {e:'🪐', x:84, y:74, s:80},
+      {e:'☄️', x:18, y:78, s:40},
+    ],
+  },
+  beach: {
+    name:'Sunny Beach', icon:'🏖️',
+    gradient:[{p:0,c:'#bae6fd'},{p:.6,c:'#bae6fd'},{p:.62,c:'#fde68a'},{p:1,c:'#d4a373'}],
+    decor:[
+      {e:'☀️', x:80, y:14, s:60},
+      {e:'☁️', x:16, y:18, s:46},
+      {e:'🌴', x:10, y:64, s:90},
+      {e:'🌴', x:90, y:66, s:80},
+      {e:'⛵', x:50, y:54, s:48},
+      {e:'🐚', x:30, y:92, s:28},
+      {e:'🐚', x:70, y:94, s:24},
+    ],
+  },
+  city: {
+    name:'Night City', icon:'🌃',
+    gradient:[{p:0,c:'#1a0b3d'},{p:1,c:'#5b21b6'}],
+    decor:[
+      {e:'🌙', x:84, y:14, s:60},
+      {e:'⭐', x:14, y:12, s:18},
+      {e:'⭐', x:40, y:18, s:16},
+      {e:'⭐', x:60, y:10, s:20},
+      {e:'🏙️', x:50, y:74, s:170},
+      {e:'✨', x:20, y:40, s:24},
+      {e:'✨', x:80, y:42, s:22},
+    ],
+  },
+  desert: {
+    name:'Desert', icon:'🏜️',
+    gradient:[{p:0,c:'#fde68a'},{p:.6,c:'#fbbf24'},{p:1,c:'#c2410c'}],
+    decor:[
+      {e:'☀️', x:82, y:18, s:70},
+      {e:'🌵', x:14, y:76, s:80},
+      {e:'🌵', x:42, y:84, s:50},
+      {e:'🌵', x:86, y:82, s:60},
+      {e:'🐍', x:64, y:94, s:28},
+    ],
+  },
+  snow: {
+    name:'Snowy Mountain', icon:'❄️',
+    gradient:[{p:0,c:'#bae6fd'},{p:.55,c:'#e0f2fe'},{p:.7,c:'#f8fafc'},{p:1,c:'#e2e8f0'}],
+    decor:[
+      {e:'⛰️', x:30, y:54, s:120},
+      {e:'🏔️', x:75, y:50, s:130},
+      {e:'❄️', x:14, y:20, s:24},
+      {e:'❄️', x:46, y:16, s:18},
+      {e:'❄️', x:82, y:24, s:22},
+      {e:'🌲', x:12, y:84, s:50},
+      {e:'⛄', x:50, y:90, s:54},
+      {e:'🌲', x:88, y:86, s:46},
+    ],
+  },
+};
+
+/* ---------- Library ---------- */
+const CAST_LIBRARY = [
+  '🦄','🐉','🤖','👸','🤴','🧚','🧜','🧙','🦸','🦹',
+  '🐱','🐶','🦊','🐰','🐻','🐼','🐸','🦖','🐢','🐙',
+  '🦋','🐝','👻','👽','🧞','🧝','🐯','🦁','🐧','🦉',
+];
+const PROP_LIBRARY = [
+  '🌳','🌲','🌴','🌵','🌸','🌺','🍄','🍎','💎','⭐',
+  '🎈','🎁','🚀','⛵','🪐','☁️','☀️','🌙','💖','🪄',
+  '🗡️','🛡️','👑','💰','🌈','🔥','⚡','💫','🎵','🎶',
+];
+
+/* ---------- State ---------- */
+let movie = {
+  title: 'My Magical Adventure',
+  cast: [],   // {id, emoji, kind}
+  scenes: []  // {id, bgKey, duration, positions:{[castId]:{x,y,size,speech,flip}}}
+};
+let currentScene = 0;
+let nextId = 1;
+let selected = null;
+let dur = 2;
+
+/* ---------- DOM ---------- */
+const stage = document.getElementById('movieStage');
+const bgLayer = document.getElementById('bgLayer');
+const decorLayer = document.getElementById('decorLayer');
+const itemsLayer = document.getElementById('itemsLayer');
+const titleEl = document.getElementById('title');
+const STAGE_W = 1280, STAGE_H = 720; // virtual coordinates
+
+/* ---------- Background helpers ---------- */
+function bgCss(key){
+  const bg = BACKGROUNDS[key];
+  return 'linear-gradient(180deg, ' + bg.gradient.map(s => `${s.c} ${(s.p*100).toFixed(1)}%`).join(', ') + ')';
+}
+function paintBg(key){
+  bgLayer.style.background = bgCss(key);
+  decorLayer.innerHTML = '';
+  for (const d of BACKGROUNDS[key].decor){
+    const el = document.createElement('div');
+    el.className = 'decor-item';
+    el.style.left = d.x + '%';
+    el.style.top  = d.y + '%';
+    el.style.fontSize = d.s + 'px';
+    el.textContent = d.e;
+    decorLayer.appendChild(el);
+  }
+}
+
+/* ---------- Build library UIs ---------- */
+const bgGrid = document.getElementById('bgGrid');
+for (const key in BACKGROUNDS){
+  const bg = BACKGROUNDS[key];
+  const b = document.createElement('button');
+  b.className = 'lib-btn bg';
+  b.dataset.bg = key;
+  b.innerHTML = `<span class="ico">${bg.icon}</span>${bg.name}`;
+  b.onclick = ()=>{
+    movie.scenes[currentScene].bgKey = key;
+    paintBg(key);
+    document.querySelectorAll('.lib-btn.bg').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    rebuildScenesBar();
+    if (window.ToonFX) ToonFX.sounds.boop();
+  };
+  bgGrid.appendChild(b);
+}
+const castGrid = document.getElementById('castGrid');
+CAST_LIBRARY.forEach(emoji=>{
+  const b = document.createElement('button');
+  b.className = 'lib-btn';
+  b.textContent = emoji;
+  b.title = 'Add this character';
+  b.onclick = ()=> addCast(emoji, 'char');
+  castGrid.appendChild(b);
+});
+const propGrid = document.getElementById('propGrid');
+PROP_LIBRARY.forEach(emoji=>{
+  const b = document.createElement('button');
+  b.className = 'lib-btn';
+  b.textContent = emoji;
+  b.title = 'Add this prop';
+  b.onclick = ()=> addCast(emoji, 'prop');
+  propGrid.appendChild(b);
+});
+
+/* ---------- Stage rendering ---------- */
+function pxFromStage(xv, yv){
+  // convert virtual stage coords to actual px when rendering
+  return { x: xv, y: yv };
+}
+function renderItems(){
+  itemsLayer.innerHTML = '';
+  const s = movie.scenes[currentScene];
+  for (const member of movie.cast){
+    const pos = s.positions[member.id];
+    if (!pos) continue;
+    const el = createActor(member, pos, true);
+    itemsLayer.appendChild(el);
+  }
+  if (selected){
+    const me = document.querySelector(`.actor[data-id="${selected.id}"]`);
+    if (me) me.classList.add('selected');
+  }
+}
+function createActor(member, pos, draggable){
+  const el = document.createElement('div');
+  el.className = 'actor';
+  el.dataset.id = member.id;
+  el.style.left = (pos.x / STAGE_W * 100) + '%';
+  el.style.top  = (pos.y / STAGE_H * 100) + '%';
+  const flip = pos.flip ? 'scaleX(-1)' : '';
+  el.innerHTML = `
+    <span class="emoji" style="font-size:${pos.size}px; display:inline-block; transform:${flip}">${member.emoji}</span>
+    ${pos.speech ? `<div class="bubble">${escapeHtml(pos.speech)}</div>` : ''}
+  `;
+  if (draggable) enableDrag(el, member);
+  return el;
+}
+function escapeHtml(s){ return s.replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'})[c]); }
+
+/* ---------- Dragging ---------- */
+function enableDrag(el, member){
+  let dragging = false, offX = 0, offY = 0;
+  el.addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    el.setPointerCapture(e.pointerId);
+    dragging = true;
+    const r = stage.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width * STAGE_W;
+    const py = (e.clientY - r.top)  / r.height * STAGE_H;
+    const pos = movie.scenes[currentScene].positions[member.id];
+    offX = px - pos.x; offY = py - pos.y;
+    selectActor(member);
+  });
+  el.addEventListener('pointermove', e=>{
+    if (!dragging) return;
+    const r = stage.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width * STAGE_W;
+    const py = (e.clientY - r.top)  / r.height * STAGE_H;
+    const pos = movie.scenes[currentScene].positions[member.id];
+    pos.x = clamp(px - offX, 0, STAGE_W);
+    pos.y = clamp(py - offY, 0, STAGE_H);
+    el.style.left = (pos.x / STAGE_W * 100) + '%';
+    el.style.top  = (pos.y / STAGE_H * 100) + '%';
+  });
+  el.addEventListener('pointerup', e=>{ dragging = false; rebuildScenesBar(); });
+  el.addEventListener('pointercancel', ()=>{ dragging = false; });
+}
+function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
+
+/* ---------- Selection ---------- */
+function selectActor(member){
+  selected = member;
+  const pos = movie.scenes[currentScene].positions[member.id];
+  document.getElementById('selName').textContent = member.emoji;
+  document.getElementById('selSize').value = pos.size;
+  document.getElementById('selFlip').checked = !!pos.flip;
+  document.getElementById('selSpeech').value = pos.speech || '';
+  document.querySelectorAll('.actor').forEach(a=>a.classList.remove('selected'));
+  const me = document.querySelector(`.actor[data-id="${member.id}"]`);
+  if (me) me.classList.add('selected');
+}
+document.getElementById('selSize').oninput = e=>{
+  if (!selected) return;
+  const pos = movie.scenes[currentScene].positions[selected.id];
+  pos.size = +e.target.value;
+  renderItems(); selectActor(selected);
+};
+document.getElementById('selFlip').onchange = e=>{
+  if (!selected) return;
+  movie.scenes[currentScene].positions[selected.id].flip = e.target.checked;
+  renderItems(); selectActor(selected);
+};
+document.getElementById('selSpeech').oninput = e=>{
+  if (!selected) return;
+  movie.scenes[currentScene].positions[selected.id].speech = e.target.value;
+  renderItems(); selectActor(selected);
+};
+document.getElementById('selDelete').onclick = ()=>{
+  if (!selected) return;
+  const id = selected.id;
+  movie.cast = movie.cast.filter(m => m.id !== id);
+  for (const s of movie.scenes) delete s.positions[id];
+  selected = null;
+  document.getElementById('selName').textContent = '— click a character —';
+  document.getElementById('selSpeech').value = '';
+  renderItems(); rebuildScenesBar();
+};
+
+/* ---------- Add cast / scene ops ---------- */
+function addCast(emoji, kind){
+  const id = 'a' + (nextId++);
+  movie.cast.push({ id, emoji, kind });
+  const size = kind === 'prop' ? 70 : 110;
+  for (const s of movie.scenes){
+    s.positions[id] = {
+      x: 300 + Math.random()*680,
+      y: kind === 'prop' ? 500 + Math.random()*150 : 350 + Math.random()*200,
+      size,
+      speech: '',
+      flip:false,
+    };
+  }
+  renderItems();
+  rebuildScenesBar();
+  selectActor({id, emoji, kind});
+  if (window.ToonFX){ ToonFX.sounds.pop(); ToonFX.toast(`Added ${emoji} to the cast!`, '🎬'); }
+}
+
+function addScene(){
+  const cur = movie.scenes[currentScene];
+  const ns = {
+    id: 's' + (nextId++),
+    bgKey: cur.bgKey,
+    duration: dur,
+    positions: JSON.parse(JSON.stringify(cur.positions))
+  };
+  movie.scenes.splice(currentScene + 1, 0, ns);
+  currentScene++;
+  paintBg(ns.bgKey);
+  renderItems(); rebuildScenesBar();
+  if (window.ToonFX) ToonFX.toast('New scene! Drag your characters to where they should END up.', '🎬');
+}
+document.getElementById('addScene').onclick = addScene;
+
+function deleteScene(i){
+  if (movie.scenes.length <= 1) return;
+  movie.scenes.splice(i,1);
+  if (currentScene >= movie.scenes.length) currentScene = movie.scenes.length - 1;
+  loadScene(currentScene); rebuildScenesBar();
+}
+function loadScene(i){
+  currentScene = i;
+  paintBg(movie.scenes[i].bgKey);
+  document.querySelectorAll('.lib-btn.bg').forEach(b => b.classList.toggle('active', b.dataset.bg === movie.scenes[i].bgKey));
+  renderItems(); rebuildScenesBar();
+}
+
+document.getElementById('durSlider').oninput = e=>{
+  dur = +e.target.value;
+  document.getElementById('durLabel').textContent = dur.toFixed(1);
+  if (movie.scenes[currentScene]) movie.scenes[currentScene].duration = dur;
+};
+
+titleEl.oninput = e => movie.title = e.target.value;
+
+/* ---------- Scenes timeline ---------- */
+function rebuildScenesBar(){
+  const bar = document.getElementById('scenesBar');
+  bar.innerHTML = '';
+  movie.scenes.forEach((s, i)=>{
+    const t = document.createElement('div');
+    t.className = 'scene-thumb' + (i===currentScene?' active':'');
+    t.title = 'Scene ' + (i+1);
+    t.style.background = bgCss(s.bgKey);
+    const cast = document.createElement('div');
+    cast.className = 'mini-cast';
+    for (const member of movie.cast.slice(0, 7)){
+      const e = document.createElement('span');
+      e.textContent = member.emoji;
+      cast.appendChild(e);
+    }
+    t.appendChild(cast);
+    const num = document.createElement('div');
+    num.className = 'num'; num.textContent = i+1; t.appendChild(num);
+    if (movie.scenes.length > 1){
+      const x = document.createElement('div');
+      x.className = 'x'; x.textContent = '×';
+      x.onclick = ev=>{ ev.stopPropagation(); deleteScene(i); };
+      t.appendChild(x);
+    }
+    t.onclick = ()=> loadScene(i);
+    bar.appendChild(t);
+  });
+  const add = document.createElement('button');
+  add.className = 'add-scene';
+  add.textContent = '+';
+  add.title = 'Add a new scene (copies the current one)';
+  add.onclick = ()=>{ addScene(); if (window.ToonFX){ ToonFX.sounds.pop(); ToonFX.confettiBurst(); } };
+  bar.appendChild(add);
+}
+
+/* ---------- PLAYBACK ---------- */
+let playing = false;
+let playTimer = null;
+let stopRequested = false;
+
+function easeInOut(t){ return t<.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2; }
+
+async function playMovie(){
+  if (playing) return;
+  playing = true;
+  stopRequested = false;
+  document.getElementById('movieMode').classList.add('on');
+  startMusic(document.getElementById('music').value);
+
+  // title card
+  const tc = document.getElementById('titleCard');
+  document.getElementById('tcText').textContent = movie.title || 'My Movie';
+  tc.classList.add('on');
+  await wait(2000);
+  if (stopRequested) return endShow();
+  tc.classList.remove('on');
+  await wait(350);
+  if (stopRequested) return endShow();
+
+  // play scenes
+  for (let i = 0; i < movie.scenes.length && !stopRequested; i++){
+    const from = (i === 0) ? movie.scenes[0] : movie.scenes[i-1];
+    const to   = movie.scenes[i];
+    paintBg(to.bgKey);
+    await tweenBetween(from, to, (i === 0) ? Math.min(to.duration, 1) : to.duration);
+  }
+  if (stopRequested) return endShow();
+  // end card
+  document.getElementById('tcText').textContent = '⭐ The End ⭐';
+  tc.classList.add('on');
+  await wait(2400);
+  endShow();
+}
+function endShow(){
+  playing = false;
+  stopRequested = false;
+  document.getElementById('titleCard').classList.remove('on');
+  document.getElementById('movieMode').classList.remove('on');
+  stopMusic();
+  loadScene(currentScene);
+}
+function wait(ms){
+  return new Promise(r => { playTimer = setTimeout(r, ms); });
+}
+function tweenBetween(prev, cur, duration){
+  return new Promise(resolve=>{
+    const t0 = performance.now();
+    // build elements (no drag during play)
+    itemsLayer.innerHTML = '';
+    const els = {};
+    for (const member of movie.cast){
+      const pos = cur.positions[member.id] || prev.positions[member.id];
+      if (!pos) continue;
+      const el = createActor(member, pos, false);
+      itemsLayer.appendChild(el);
+      els[member.id] = el;
+    }
+    function step(now){
+      if (stopRequested){ resolve(); return; }
+      const t = Math.min(1, (now - t0) / (duration * 1000));
+      const e = easeInOut(t);
+      for (const member of movie.cast){
+        const a = prev.positions[member.id] || cur.positions[member.id];
+        const b = cur.positions[member.id]  || prev.positions[member.id];
+        const el = els[member.id];
+        if (!a || !b || !el) continue;
+        const x = a.x + (b.x - a.x) * e;
+        const y = a.y + (b.y - a.y) * e;
+        const sz = a.size + (b.size - a.size) * e;
+        el.style.left = (x / STAGE_W * 100) + '%';
+        el.style.top  = (y / STAGE_H * 100) + '%';
+        const sp = el.querySelector('.emoji');
+        if (sp){
+          sp.style.fontSize = sz + 'px';
+          sp.style.transform = (b.flip ? 'scaleX(-1)' : '');
+        }
+        // speech bubble: show whatever cur says (the destination)
+        let bub = el.querySelector('.bubble');
+        if (b.speech){
+          if (!bub){
+            bub = document.createElement('div');
+            bub.className = 'bubble';
+            el.appendChild(bub);
+          }
+          bub.textContent = b.speech;
+        } else if (bub){
+          bub.remove();
+        }
+      }
+      if (t < 1) requestAnimationFrame(step);
+      else resolve();
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+document.getElementById('playMovie').onclick = playMovie;
+document.getElementById('stopMovie').onclick = ()=>{ stopRequested = true; clearTimeout(playTimer); };
+
+/* ---------- Soundtrack (original chord patterns, no copyrighted melodies) ---------- */
+let musicCtx = null;
+let musicTimer = null;
+function muted(){ return localStorage.getItem('toonlab-muted') === '1'; }
+
+const SOUNDTRACKS = {
+  happy:     { bpm: 132, type:'triangle', vol:.07, pattern:[523,659,784,1046, 659,784,1046,1318, 784,1046,1318,1568] },
+  adventure: { bpm: 110, type:'sawtooth', vol:.05, pattern:[220,330,440,330, 247,370,494,370, 261,392,523,392] },
+  mystery:   { bpm:  80, type:'sine',     vol:.07, pattern:[277,330,415,330, 311,392,466,392, 277,330,415,494] },
+  dance:     { bpm: 140, type:'square',   vol:.05, pattern:[440,440,330,440, 587,440,330,440, 659,440,330,440] },
+  lullaby:   { bpm:  72, type:'sine',     vol:.07, pattern:[523,659,784,659, 440,587,659,587, 392,523,659,523] },
+};
+function startMusic(kind){
+  stopMusic();
+  if (!kind || muted()) return;
+  const T = SOUNDTRACKS[kind];
+  if (!T) return;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  musicCtx = new AC();
+  const noteSec = 60 / T.bpm / 2;
+  let i = 0;
+  musicTimer = setInterval(()=>{
+    if (!playing || !musicCtx){ stopMusic(); return; }
+    const o = musicCtx.createOscillator();
+    const g = musicCtx.createGain();
+    o.type = T.type;
+    o.frequency.value = T.pattern[i % T.pattern.length];
+    const t0 = musicCtx.currentTime;
+    g.gain.value = 0;
+    g.gain.linearRampToValueAtTime(T.vol, t0 + .02);
+    g.gain.exponentialRampToValueAtTime(.0001, t0 + noteSec * 1.4);
+    o.connect(g).connect(musicCtx.destination);
+    o.start(); o.stop(t0 + noteSec * 1.5);
+    i++;
+  }, noteSec * 1000);
+}
+function stopMusic(){
+  if (musicTimer){ clearInterval(musicTimer); musicTimer = null; }
+  if (musicCtx){ try{ musicCtx.close(); }catch(e){} musicCtx = null; }
+}
+
+/* ---------- Save scene as PNG ---------- */
+document.getElementById('saveFrame').onclick = ()=>{
+  const w = STAGE_W, h = STAGE_H;
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  const s = movie.scenes[currentScene];
+  const bg = BACKGROUNDS[s.bgKey];
+  // gradient
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  for (const st of bg.gradient) grad.addColorStop(st.p, st.c);
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
+  // decor
+  for (const d of bg.decor){
+    ctx.font = `${d.s * (w/1280)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(d.e, (d.x/100)*w, (d.y/100)*h);
+  }
+  // cast
+  for (const member of movie.cast){
+    const pos = s.positions[member.id];
+    if (!pos) continue;
+    ctx.save();
+    ctx.font = `${pos.size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    if (pos.flip){
+      ctx.translate(pos.x, pos.y);
+      ctx.scale(-1, 1);
+      ctx.fillText(member.emoji, 0, 0);
+    } else {
+      ctx.fillText(member.emoji, pos.x, pos.y);
+    }
+    ctx.restore();
+    if (pos.speech){
+      ctx.save();
+      ctx.font = `bold 32px "Fredoka","Nunito",sans-serif`;
+      const tw = ctx.measureText(pos.speech).width + 30;
+      const bx = pos.x - tw/2, by = pos.y - pos.size - 80;
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = '#1a0b3d'; ctx.lineWidth = 5;
+      roundRect(ctx, bx, by, tw, 50, 20); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#1a0b3d';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(pos.speech, pos.x, by + 25);
+      ctx.restore();
+    }
+  }
+  // title stamp
+  ctx.save();
+  ctx.font = `bold 30px "Fredoka","Nunito",sans-serif`;
+  ctx.fillStyle = 'rgba(0,0,0,.45)';
+  ctx.fillRect(0, h-50, w, 50);
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('🎬 ' + (movie.title || 'My Movie') + ' • Made in ToonLab', w/2, h-25);
+  ctx.restore();
+
+  const a = document.createElement('a');
+  a.download = (movie.title || 'movie').replace(/[^\w]/g,'_') + '-scene' + (currentScene+1) + '.png';
+  a.href = c.toDataURL('image/png');
+  a.click();
+};
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+
+/* ---------- Stage background click = deselect ---------- */
+stage.addEventListener('pointerdown', e=>{
+  if (e.target === stage || e.target.classList.contains('bg') || e.target.classList.contains('decor')){
+    selected = null;
+    document.querySelectorAll('.actor').forEach(a=>a.classList.remove('selected'));
+    document.getElementById('selName').textContent = '— click a character —';
+  }
+});
+
+/* ---------- Initial demo movie (so it looks alive) ---------- */
+function init(){
+  // scene 1
+  movie.scenes.push({ id:'s'+(nextId++), bgKey:'castle', duration:2, positions:{} });
+  paintBg('castle');
+  document.querySelector('.lib-btn.bg[data-bg="castle"]').classList.add('active');
+  // add a couple of starter characters
+  addCast('🐉', 'char');
+  addCast('👸', 'char');
+  // place them in scene 1
+  const s1 = movie.scenes[0];
+  const ids = movie.cast.map(c=>c.id);
+  s1.positions[ids[0]] = { x: 240, y: 470, size:130, speech:'Hello!', flip:false };
+  s1.positions[ids[1]] = { x: 980, y: 470, size:130, speech:'Hi dragon!', flip:true };
+  // scene 2
+  movie.scenes.push({
+    id:'s'+(nextId++), bgKey:'castle', duration:2,
+    positions:{
+      [ids[0]]:{x:620, y:470, size:140, speech:'Let\'s fly!', flip:false},
+      [ids[1]]:{x:760, y:380, size:130, speech:'Yay!', flip:false},
+    }
+  });
+  // scene 3 — change world
+  movie.scenes.push({
+    id:'s'+(nextId++), bgKey:'space', duration:2.5,
+    positions:{
+      [ids[0]]:{x:380, y:300, size:150, speech:'WOW! ⭐', flip:false},
+      [ids[1]]:{x:820, y:340, size:130, speech:'The stars!', flip:false},
+    }
+  });
+  currentScene = 0;
+  loadScene(0);
+  selectActor(movie.cast[0]);
+  rebuildScenesBar();
+}
+init();
+
+window.addEventListener('load', ()=>{
+  setTimeout(()=> ToonFX && ToonFX.toast('Press ▶ Play Movie to see the demo!', '🎬'), 600);
+});
+</script>
+</body>
+</html>

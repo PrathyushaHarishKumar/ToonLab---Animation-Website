@@ -1,0 +1,24 @@
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local dev
+.cache/
+dist/
+node_modules/
+
+# Misc
+*.zip
