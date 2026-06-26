@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Group Project — ToonLab</title>
+<meta name="description" content="Make an animation together! Each person builds a scene, shares a code, and the scenes combine into one group movie." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👥</text></svg>" />
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="brand"><span class="logo"></span> ToonLab</a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="movie.html">Movie</a>
+    <a href="world3d.html">3D</a>
+    <a href="flipbook.html">Flipbook</a>
+    <a href="bouncer.html">Bouncer</a>
+    <a href="stickman.html">Stickman</a>
+    <a href="challenge.html">Challenges</a>
+    <a href="collab.html" class="active">Group</a>
+    <a href="learn.html">Learn</a>
+    <a href="quiz.html">Quiz</a>
+  </div>
+</nav>
+
+<div class="page">
+  <section class="banner">
+    <span class="float f1">👥</span>
+    <span class="float f2">🎬</span>
+    <span class="float f3">🤝</span>
+    <h1>👥 Group Project</h1>
+    <p>Make a movie <strong>together!</strong> Everyone builds their own scene, then shares a little <strong>code</strong>. Paste your friends' codes to combine all the scenes into one big group movie. Works even with no internet — just send the code however you like!</p>
+  </section>
+
+  <div class="collab-grid">
+    <!-- LEFT: build your scene -->
+    <section class="panel">
+      <h2>1) Build your scene</h2>
+
+      <div class="group">
+        <label>Your name</label>
+        <input type="text" id="author" placeholder="e.g. Maya" maxlength="20"
+          style="width:100%; padding:9px 12px; border:3px solid var(--ink); border-radius:12px; font-family:'Fredoka',sans-serif; font-weight:700; box-shadow:0 3px 0 var(--ink)"/>
+      </div>
+
+      <div class="group">
+        <label>World</label>
+        <div class="bg-grid" id="bgGrid"></div>
+      </div>
+
+      <div class="group">
+        <label>Add characters (click)</label>
+        <div class="cast-grid" id="castGrid"></div>
+      </div>
+
+      <div class="collab-stage" id="stage">
+        <div class="bg" id="bg" style="position:absolute; inset:0"></div>
+        <div class="decor" id="decor" style="position:absolute; inset:0; pointer-events:none"></div>
+        <div class="items" id="items" style="position:absolute; inset:0"></div>
+        <div class="cap" id="capPreview"></div>
+      </div>
+
+      <div class="group" style="margin-top:12px">
+        <label>What happens / what they say</label>
+        <input type="text" id="caption" placeholder="e.g. The dragon takes off!" maxlength="70"
+          style="width:100%; padding:9px 12px; border:3px solid var(--ink); border-radius:12px; font-weight:700; box-shadow:0 3px 0 var(--ink)"/>
+      </div>
+
+      <div class="button-row" style="margin-top:6px">
+        <button class="btn green" id="addScene" data-sound="pop" data-confetti>➕ Add my scene to the group</button>
+        <button class="btn ghost small" id="clearDraft" data-sound="boop">🧹 Clear stage</button>
+      </div>
+      <p style="font-size:12px; font-weight:700; color:#5b3da4; margin:8px 0 0">Tip: drag characters on the stage to move them.</p>
+    </section>
+
+    <!-- RIGHT: the group movie + sharing -->
+    <aside class="panel">
+      <h2>2) The group movie</h2>
+      <input type="text" id="title" value="Our Group Movie" maxlength="40"
+        style="width:100%; padding:9px 12px; border:3px solid var(--ink); border-radius:12px; font-family:'Fredoka',sans-serif; font-weight:700; box-shadow:0 3px 0 var(--ink); margin-bottom:10px"/>
+
+      <div class="contrib-list" id="contribList"></div>
+
+      <div class="button-row" style="margin-top:12px">
+        <button class="btn rainbow big" id="playGroup" data-sound="fanfare" data-confetti style="flex:1">▶ Play group movie</button>
+      </div>
+
+      <h2 style="margin-top:22px">3) Share &amp; combine</h2>
+      <p style="font-size:13px; font-weight:700; margin:0 0 8px">Send this code to your group. They paste it here too — everyone's scenes join together!</p>
+      <div class="button-row" style="margin-bottom:8px">
+        <button class="btn small blue" id="getCode" data-sound="ding">📤 Get my share code</button>
+        <button class="btn small green" id="addCode" data-sound="pop">📥 Add from a code</button>
+      </div>
+      <textarea class="collab-code" id="code" placeholder="A share code will appear here. Or paste a friend's code and press 📥 Add from a code."></textarea>
+      <div class="button-row" style="margin-top:8px">
+        <button class="btn small ghost" id="copyCode" data-sound="pop">📋 Copy code</button>
+        <button class="btn small ghost" id="resetGroup" data-sound="boop">🗑 Start over</button>
+      </div>
+
+      <div class="group" style="margin-top:14px">
+        <label>Save the whole group project</label>
+        <div data-toonbar="collab"></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="tip-strip" style="margin-top:24px">
+    <span class="ico">🤝</span>
+    <div><strong>How to collaborate:</strong> 1) Build your scene → 2) "Get my share code" → 3) send it to a friend (text, email, anything) → 4) they press "Add from a code" → now you BOTH have all the scenes. Play it together!</div>
+  </div>
+</div>
+
+<!-- Group play overlay -->
+<div class="g-play" id="gPlay">
+  <div class="g-stage" id="gStage">
+    <div class="bg" id="gBg"></div>
+    <div class="decor" id="gDecor"></div>
+    <div class="items" id="gItems"></div>
+    <div class="g-cap" id="gCap"></div>
+    <div class="g-author" id="gAuthor"></div>
+  </div>
+  <button class="btn ghost" id="gClose" data-sound="boop" style="margin-top:16px">⏹ Close</button>
+</div>
+
+<footer>Great movies are made by teams. 🎬🤝</footer>
+
+<script src="fx.js"></script>
+<script src="store.js"></script>
+<script>
+/* ---------------- Group Project ---------------- */
+const BGS = {
+  forest: { name:'Forest', icon:'🌲', grad:'linear-gradient(180deg,#b9e6ff 0,#b9e6ff 60%,#6db86d 62%,#2d6b2d 100%)', decor:[['☀️',84,12],['☁️',18,14],['🌲',8,78],['🌳',90,80]] },
+  sea:    { name:'Sea', icon:'🌊', grad:'linear-gradient(180deg,#7dd3fc,#0c4a6e)', decor:[['🫧',16,24],['🪸',12,86],['🪸',88,84],['🐚',70,90]] },
+  space:  { name:'Space', icon:'🚀', grad:'linear-gradient(180deg,#0b0030,#1e0556)', decor:[['⭐',12,16],['⭐',80,22],['🪐',84,74],['🌟',40,18]] },
+  beach:  { name:'Beach', icon:'🏖️', grad:'linear-gradient(180deg,#bae6fd 0,#bae6fd 60%,#fde68a 62%,#d4a373 100%)', decor:[['☀️',80,14],['🌴',10,66],['🌴',90,68],['⛵',50,52]] },
+  city:   { name:'City', icon:'🌃', grad:'linear-gradient(180deg,#1a0b3d,#5b21b6)', decor:[['🌙',84,16],['🏙️',50,76],['✨',20,40],['✨',80,42]] },
+  castle: { name:'Castle', icon:'🏰', grad:'linear-gradient(180deg,#ffd6f1 0,#cdeaff 45%,#a7d18c 70%,#5fa05f 100%)', decor:[['🌤️',14,14],['🏰',50,60],['🌳',10,82],['🌳',90,82]] },
+};
+const CHARS = ['🦄','🐉','🤖','👸','🤴','🧚','🧜','🧙','🦸','🐱','🐶','🦊','🐻','🐧','👻','👽','🐢','🦋','⭐','🚀','🎈','🌈'];
+
+const KEY = 'collab';
+let group = { title:'Our Group Movie', scenes:[] };
+let draft = { bgKey:'forest', caption:'', actors:[] };  // actors: {emoji,x,y,size}
+let nextLocal = 1;
+function uid(){ return 'sc_' + Math.random().toString(36).slice(2,8) + Date.now().toString(36).slice(-4); }
+
+/* ----- build pickers ----- */
+const bgGrid = document.getElementById('bgGrid');
+for (const key in BGS){
+  const b = document.createElement('button');
+  b.className = 'lib-btn bg';
+  b.dataset.bg = key;
+  b.innerHTML = `<span class="ico">${BGS[key].icon}</span>${BGS[key].name}`;
+  b.onclick = ()=>{ draft.bgKey = key; paintDraft(); setActiveBg(); save(); };
+  bgGrid.appendChild(b);
+}
+function setActiveBg(){ document.querySelectorAll('.lib-btn.bg').forEach(x=>x.classList.toggle('active', x.dataset.bg===draft.bgKey)); }
+const castGrid = document.getElementById('castGrid');
+CHARS.forEach(emoji=>{
+  const b = document.createElement('button');
+  b.className = 'lib-btn';
+  b.textContent = emoji;
+  b.onclick = ()=> addActor(emoji);
+  castGrid.appendChild(b);
+});
+
+/* ----- draft stage ----- */
+const stageEl = document.getElementById('stage');
+const bgEl = document.getElementById('bg');
+const decorEl = document.getElementById('decor');
+const itemsEl = document.getElementById('items');
+function paintBgInto(bgEl, decorEl, key){
+  bgEl.style.background = BGS[key].grad;
+  decorEl.innerHTML = '';
+  BGS[key].decor.forEach(([e,x,y])=>{
+    const d = document.createElement('div');
+    d.className = 'decor-item';
+    d.style.cssText = `position:absolute; left:${x}%; top:${y}%; transform:translate(-50%,-50%); font-size:42px`;
+    d.textContent = e;
+    decorEl.appendChild(d);
+  });
+}
+function renderActors(host, actors, draggable){
+  host.innerHTML = '';
+  actors.forEach((a, idx)=>{
+    const el = document.createElement('div');
+    el.className = 'actor';
+    el.style.left = a.x + '%';
+    el.style.top = a.y + '%';
+    el.innerHTML = `<span class="emoji" style="font-size:${a.size}px">${a.emoji}</span>`;
+    if (draggable) dragActor(el, a);
+    host.appendChild(el);
+  });
+}
+function paintDraft(){
+  paintBgInto(bgEl, decorEl, draft.bgKey);
+  renderActors(itemsEl, draft.actors, true);
+  document.getElementById('capPreview').textContent = draft.caption || '';
+}
+function addActor(emoji){
+  draft.actors.push({ emoji, x: 35 + Math.random()*30, y: 45 + Math.random()*25, size: 56 });
+  paintDraft(); save();
+  if (window.ToonFX) ToonFX.sounds.pop();
+}
+function dragActor(el, a){
+  let on=false;
+  el.addEventListener('pointerdown', e=>{
+    e.preventDefault(); el.setPointerCapture(e.pointerId); on=true;
+  });
+  el.addEventListener('pointermove', e=>{
+    if(!on) return;
+    const r = stageEl.getBoundingClientRect();
+    a.x = Math.max(2, Math.min(98, (e.clientX-r.left)/r.width*100));
+    a.y = Math.max(6, Math.min(94, (e.clientY-r.top)/r.height*100));
+    el.style.left = a.x+'%'; el.style.top = a.y+'%';
+  });
+  el.addEventListener('pointerup', ()=>{ on=false; save(); });
+  el.addEventListener('dblclick', ()=>{ const i=draft.actors.indexOf(a); if(i>=0){ draft.actors.splice(i,1); paintDraft(); save(); } });
+}
+document.getElementById('caption').oninput = e=>{ draft.caption = e.target.value; document.getElementById('capPreview').textContent = draft.caption; save(); };
+document.getElementById('clearDraft').onclick = ()=>{ draft.actors = []; draft.caption=''; document.getElementById('caption').value=''; paintDraft(); save(); };
+document.getElementById('title').oninput = e=>{ group.title = e.target.value; save(); };
+
+/* ----- add a scene to the group ----- */
+document.getElementById('addScene').onclick = ()=>{
+  const author = (document.getElementById('author').value || 'Someone').trim();
+  if (!draft.actors.length){ if(window.ToonFX) ToonFX.toast('Add at least one character first!', '🙂'); return; }
+  group.scenes.push({ id:uid(), author, bgKey:draft.bgKey, caption:draft.caption, actors:JSON.parse(JSON.stringify(draft.actors)) });
+  draft.actors = []; draft.caption=''; document.getElementById('caption').value='';
+  paintDraft(); rebuildContrib(); save();
+  if (window.ToonFX){ ToonFX.confettiBurst(); ToonFX.toast('Your scene joined the group!', '🎬'); }
+};
+
+/* ----- contributor list ----- */
+function rebuildContrib(){
+  const host = document.getElementById('contribList');
+  host.innerHTML = '';
+  if (!group.scenes.length){
+    host.innerHTML = '<p style="font-weight:700; opacity:.7">No scenes yet. Build one on the left, or paste a friend\'s code below!</p>';
+    return;
+  }
+  group.scenes.forEach((s, i)=>{
+    const row = document.createElement('div');
+    row.className = 'contrib';
+    row.innerHTML = `
+      <div class="av">${s.actors[0] ? s.actors[0].emoji : '🎬'}</div>
+      <div class="meta"><strong>Scene ${i+1} — ${escapeHtml(s.author)}</strong>
+        <small>${BGS[s.bgKey]?BGS[s.bgKey].name:'?'} • ${escapeHtml(s.caption||'(no caption)')}</small></div>`;
+    const del = document.createElement('button');
+    del.className = 'btn small ghost'; del.textContent = '×'; del.title='Remove this scene';
+    del.onclick = ()=>{ group.scenes.splice(i,1); rebuildContrib(); save(); };
+    row.appendChild(del);
+    host.appendChild(row);
+  });
+}
+function escapeHtml(s){ return String(s).replace(/[<>&"]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+
+/* ----- share codes ----- */
+function encode(obj){ return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))); }
+function decode(str){ return JSON.parse(decodeURIComponent(escape(atob(str.trim())))); }
+document.getElementById('getCode').onclick = ()=>{
+  document.getElementById('code').value = encode(group);
+  if (window.ToonFX) ToonFX.toast('Share code ready — copy and send it!', '📤');
+};
+document.getElementById('addCode').onclick = ()=>{
+  const raw = document.getElementById('code').value.trim();
+  if (!raw){ if(window.ToonFX) ToonFX.toast('Paste a code into the box first.', '🙂'); return; }
+  let incoming;
+  try { incoming = decode(raw); } catch(e){ if(window.ToonFX) ToonFX.toast('Hmm, that code looks broken.', '⚠'); return; }
+  if (!incoming || !Array.isArray(incoming.scenes)){ if(window.ToonFX) ToonFX.toast('That doesn\'t look like a group code.', '⚠'); return; }
+  const have = new Set(group.scenes.map(s=>s.id));
+  let added = 0;
+  incoming.scenes.forEach(s=>{ if (s.id && !have.has(s.id)){ group.scenes.push(s); added++; } });
+  if (incoming.title && group.scenes.length === incoming.scenes.length){ group.title = incoming.title; document.getElementById('title').value = group.title; }
+  rebuildContrib(); save();
+  if (window.ToonFX){ ToonFX.confettiBurst(); ToonFX.toast(added ? `Added ${added} new scene${added>1?'s':''}!` : 'Already have all those scenes.', '📥'); }
+};
+document.getElementById('copyCode').onclick = ()=>{
+  const ta = document.getElementById('code');
+  if (!ta.value) ta.value = encode(group);
+  ta.select();
+  navigator.clipboard ? navigator.clipboard.writeText(ta.value).then(()=>ToonFX&&ToonFX.toast('Copied!','📋')) : document.execCommand('copy');
+};
+document.getElementById('resetGroup').onclick = ()=>{
+  if (!confirm('Start the whole group project over? This clears all scenes on this device.')) return;
+  group = { title:'Our Group Movie', scenes:[] };
+  document.getElementById('title').value = group.title;
+  document.getElementById('code').value = '';
+  rebuildContrib(); save();
+};
+
+/* ----- play the group movie ----- */
+const gPlay = document.getElementById('gPlay');
+let gTimer = null;
+document.getElementById('playGroup').onclick = ()=>{
+  if (!group.scenes.length){ if(window.ToonFX) ToonFX.toast('No scenes to play yet!', '🎬'); return; }
+  let i = 0;
+  gPlay.classList.add('on');
+  function showScene(){
+    const s = group.scenes[i];
+    paintBgInto(document.getElementById('gBg'), document.getElementById('gDecor'), s.bgKey);
+    const items = document.getElementById('gItems');
+    items.innerHTML = '';
+    s.actors.forEach(a=>{
+      const el = document.createElement('div');
+      el.className = 'actor pop-in';
+      el.style.left = a.x+'%'; el.style.top = a.y+'%';
+      el.innerHTML = `<span class="emoji" style="font-size:${a.size*1.7}px">${a.emoji}</span>`;
+      items.appendChild(el);
+    });
+    document.getElementById('gCap').textContent = s.caption || '';
+    document.getElementById('gAuthor').textContent = '🎬 by ' + s.author;
+  }
+  showScene();
+  gTimer = setInterval(()=>{
+    i++;
+    if (i >= group.scenes.length){ clearInterval(gTimer); gTimer=null; setTimeout(endPlay, 1600); document.getElementById('gCap').textContent = '⭐ The End ⭐'; document.getElementById('gItems').innerHTML=''; return; }
+    showScene();
+  }, 2600);
+};
+function endPlay(){ gPlay.classList.remove('on'); if(gTimer){ clearInterval(gTimer); gTimer=null; } }
+document.getElementById('gClose').onclick = endPlay;
+
+/* ----- save / restore ----- */
+function serialize(){ return { group, draft, author:document.getElementById('author').value }; }
+function save(){ if (window.ToonStore) ToonStore.autosave(KEY, serialize); }
+function restore(data){
+  if (!data) return false;
+  if (data.group && Array.isArray(data.group.scenes)) group = data.group;
+  if (data.draft) draft = data.draft;
+  if (data.author) document.getElementById('author').value = data.author;
+  document.getElementById('title').value = group.title || 'Our Group Movie';
+  document.getElementById('caption').value = draft.caption || '';
+  setActiveBg(); paintDraft(); rebuildContrib();
+  return true;
+}
+if (window.ToonStore){
+  const bar = document.querySelector('[data-toonbar="collab"]');
+  if (bar) ToonStore.toolbar(bar, {
+    download: ()=> ToonStore.download(group.title || 'group-movie', { kind:'collab', data:serialize() }),
+    restore: (data)=>{ if (restore(data)){ save(); if (window.ToonFX) ToonFX.toast('Group project opened!', '📂'); } }
+  });
+}
+
+/* ----- init ----- */
+const _saved = window.ToonStore ? ToonStore.load(KEY) : null;
+if (!(_saved && restore(_saved))){
+  setActiveBg(); paintDraft(); rebuildContrib();
+}
+</script>
+</body>
+</html>

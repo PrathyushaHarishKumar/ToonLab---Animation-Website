@@ -17,9 +17,12 @@
   <div class="nav-links">
     <a href="index.html">Home</a>
     <a href="movie.html">Movie</a>
+    <a href="world3d.html">3D</a>
     <a href="flipbook.html">Flipbook</a>
     <a href="bouncer.html" class="active">Bouncer</a>
     <a href="stickman.html">Stickman</a>
+    <a href="challenge.html">Challenges</a>
+    <a href="collab.html">Group</a>
     <a href="learn.html">Learn</a>
     <a href="quiz.html">Quiz</a>
   </div>
@@ -92,6 +95,11 @@
           </label>
         </div>
       </div>
+
+      <div class="group">
+        <label>My work (auto-saved)</label>
+        <div data-toonbar="bouncer"></div>
+      </div>
     </aside>
 
     <section class="panel stage-wrap">
@@ -117,6 +125,7 @@
 <footer>Tween = "in-between." Now you know.</footer>
 
 <script src="fx.js"></script>
+<script src="store.js"></script>
 <script>
 const stage = document.getElementById('stage');
 const ctx = stage.getContext('2d');
@@ -138,7 +147,7 @@ COLORS.forEach((c,i)=>{
     color = c;
     document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));
     el.classList.add('active');
-    if (selected){ selected.color = color; render(); }
+    if (selected){ selected.color = color; render(); scheduleSave(); }
   };
   sw.appendChild(el);
 });
@@ -146,9 +155,10 @@ COLORS.forEach((c,i)=>{
 document.getElementById('dur').oninput = e=>{
   dur = +e.target.value;
   document.getElementById('durLabel').textContent = dur.toFixed(1);
+  scheduleSave();
 };
-document.getElementById('easing').onchange = e=>easing = e.target.value;
-document.getElementById('loopChk').onchange = e=>loop = e.target.checked;
+document.getElementById('easing').onchange = e=>{ easing = e.target.value; scheduleSave(); };
+document.getElementById('loopChk').onchange = e=>{ loop = e.target.checked; scheduleSave(); };
 
 const shapes = [];
 let selected = null;
@@ -167,6 +177,7 @@ document.querySelectorAll('[data-add]').forEach(b=>{
     mode = 'start';
     updateSel();
     render();
+    scheduleSave();
   };
 });
 
@@ -184,7 +195,7 @@ document.getElementById('setEnd').onclick   = ()=>{ mode='end';   updateSel(); }
 document.getElementById('delShape').onclick = ()=>{
   if (!selected) return;
   const i = shapes.indexOf(selected);
-  shapes.splice(i,1); selected = null; updateSel(); render();
+  shapes.splice(i,1); selected = null; updateSel(); render(); scheduleSave();
 };
 
 // drawing
@@ -320,8 +331,8 @@ function drag(e){
   selected[mode] = { x: clamp(p.x, 0, stage.width), y: clamp(p.y, 0, stage.height) };
   render();
 }
-window.addEventListener('mouseup', ()=> dragging=false);
-window.addEventListener('touchend', ()=> dragging=false);
+window.addEventListener('mouseup', ()=>{ if (dragging){ dragging=false; scheduleSave(); } });
+window.addEventListener('touchend', ()=>{ if (dragging){ dragging=false; scheduleSave(); } });
 function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
 
 // playback
@@ -345,9 +356,37 @@ document.getElementById('stopBtn').onclick = ()=>{
   if (playing){ cancelAnimationFrame(playing); playing = null; render(); }
 };
 
-// initial demo
-shapes.push({ kind:'circle', color:'#ec4899', start:{x:150,y:120}, end:{x:750,y:460}, size:50 });
-selected = shapes[0]; updateSel(); render();
+/* ---------- Save / restore ---------- */
+function serialize(){
+  return { dur, loop, easing, shapes: JSON.parse(JSON.stringify(shapes)) };
+}
+function scheduleSave(){ if (window.ToonStore) ToonStore.autosave('bouncer', serialize); }
+function restore(data){
+  if (!data || !Array.isArray(data.shapes)) return false;
+  shapes.length = 0;
+  data.shapes.forEach(s=>shapes.push(s));
+  if (typeof data.dur === 'number'){ dur = data.dur; document.getElementById('dur').value = dur; document.getElementById('durLabel').textContent = dur.toFixed(1); }
+  if (typeof data.loop === 'boolean'){ loop = data.loop; document.getElementById('loopChk').checked = loop; }
+  if (data.easing){ easing = data.easing; document.getElementById('easing').value = easing; }
+  selected = shapes[0] || null;
+  updateSel(); render();
+  return true;
+}
+
+if (window.ToonStore){
+  const bar = document.querySelector('[data-toonbar="bouncer"]');
+  if (bar) ToonStore.toolbar(bar, {
+    download: ()=> ToonStore.download('bouncer', { kind:'bouncer', data:serialize() }),
+    restore: (data)=>{ if (restore(data)){ scheduleSave(); if (window.ToonFX) ToonFX.toast('Bouncer opened!', '📂'); } }
+  });
+}
+
+// restore saved work, otherwise the friendly demo
+const _saved = window.ToonStore ? ToonStore.load('bouncer') : null;
+if (!(_saved && restore(_saved))){
+  shapes.push({ kind:'circle', color:'#ec4899', start:{x:150,y:120}, end:{x:750,y:460}, size:50 });
+  selected = shapes[0]; updateSel(); render();
+}
 </script>
 </body>
 </html>

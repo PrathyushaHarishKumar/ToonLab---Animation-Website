@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Challenges — ToonLab</title>
+<meta name="description" content="Daily animation challenges and creative prompts for young animators. Pick a challenge, make it, and mark it done!" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏅</text></svg>" />
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="brand"><span class="logo"></span> ToonLab</a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="movie.html">Movie</a>
+    <a href="world3d.html">3D</a>
+    <a href="flipbook.html">Flipbook</a>
+    <a href="bouncer.html">Bouncer</a>
+    <a href="stickman.html">Stickman</a>
+    <a href="challenge.html" class="active">Challenges</a>
+    <a href="collab.html">Group</a>
+    <a href="learn.html">Learn</a>
+    <a href="quiz.html">Quiz</a>
+  </div>
+</nav>
+
+<div class="page">
+  <section class="banner">
+    <span class="float f1">🏅</span>
+    <span class="float f2">🎯</span>
+    <span class="float f3">⭐</span>
+    <h1>🏅 Animation Challenges</h1>
+    <p>Stuck on what to make? Pick a challenge below! Each one gives you a creative <strong>prompt</strong>, a goal, and a button that opens the right tool. Make it, then tap <strong>✓ I did it!</strong> to earn it.</p>
+  </section>
+
+  <div style="text-align:center; margin-bottom:18px">
+    <span class="chal-progress" id="progress">0 / 0 challenges done</span>
+  </div>
+
+  <div style="text-align:center; margin-bottom:6px">
+    <button class="btn rainbow big" id="surprise" data-sound="fanfare" data-confetti>🎲 Surprise me with a prompt!</button>
+  </div>
+  <div class="prompt-card" id="surpriseCard" style="display:none; max-width:560px; margin:14px auto 0; text-align:center"></div>
+
+  <div class="chal-filters" id="filters">
+    <button class="btn small purple active" data-filter="all">All</button>
+    <button class="btn small ghost" data-filter="easy">🟢 Easy</button>
+    <button class="btn small ghost" data-filter="medium">🟡 Medium</button>
+    <button class="btn small ghost" data-filter="hard">🔴 Hard</button>
+    <button class="btn small ghost" data-filter="todo">⬜ Not done yet</button>
+  </div>
+
+  <section class="challenge-grid" id="grid"></section>
+
+  <div class="tip-strip" style="margin-top:26px">
+    <span class="ico">💡</span>
+    <div><strong>Tip:</strong> Your finished challenges are remembered on this device — come back tomorrow and try a harder one!</div>
+  </div>
+</div>
+
+<footer>Every animator started with one tiny challenge. 🌟</footer>
+
+<script src="fx.js"></script>
+<script src="store.js"></script>
+<script>
+/* ---------------- Challenges ---------------- */
+const CHALLENGES = [
+  { id:'walk', emoji:'🚶', level:'easy', tool:'movie.html', toolName:'Movie',
+    title:'The Big Walk', prompt:'Make a Mover walk all the way across the screen.',
+    goal:'Add a body Mover, set it to 🚶 Walk, and move it from one side to the other across 2 scenes.' },
+  { id:'bounce', emoji:'🏀', level:'easy', tool:'bouncer.html', toolName:'Bouncer',
+    title:'Bouncy Ball', prompt:'Drop a ball from the top and make it land with a bounce.',
+    goal:'Use the Bouncer with the "Bouncy!" easing. Start high, end low.' },
+  { id:'blink', emoji:'😉', level:'easy', tool:'flipbook.html', toolName:'Flipbook',
+    title:'Make it Blink', prompt:'Draw a face that blinks its eyes.',
+    goal:'Draw 3 flipbook frames: eyes open, eyes half, eyes shut. Play it on a loop.' },
+  { id:'wave', emoji:'👋', level:'easy', tool:'stickman.html', toolName:'Stickman',
+    title:'Friendly Hello', prompt:'Make a stickman wave hello.',
+    goal:'Save 4 poses where the hand swings up and down, then press Play.' },
+  { id:'duo', emoji:'🕺', level:'medium', tool:'stickman.html', toolName:'Stickman',
+    title:'Dance Partners', prompt:'Two stickmen dancing together.',
+    goal:'Add a second stickman, give them different colors, and make them both dance in your keyframes.' },
+  { id:'chase', emoji:'🏃', level:'medium', tool:'movie.html', toolName:'Movie',
+    title:'The Chase', prompt:'One character runs after another.',
+    goal:'Two Movers: one set to 🚶 Walk in front, one behind. Move them across 3 scenes so it looks like a chase.' },
+  { id:'squash', emoji:'🫧', level:'medium', tool:'bouncer.html', toolName:'Bouncer',
+    title:'Squash & Stretch', prompt:'Show a shape speeding up then slowing down.',
+    goal:'Compare "Steady" easing vs "Slow stop". Notice how one feels more alive!' },
+  { id:'spin3d', emoji:'🧊', level:'medium', tool:'world3d.html', toolName:'3D',
+    title:'Spin in 3D', prompt:'Make a 3D cube spin all the way around.',
+    goal:'In the 3D studio, set a start keyframe, spin the turn dial to 360°, set an end keyframe, and play.' },
+  { id:'story', emoji:'🎬', level:'hard', tool:'movie.html', toolName:'Movie',
+    title:'Tell a Tiny Story', prompt:'A 3-scene movie with a beginning, middle, and end.',
+    goal:'Scene 1: meet the characters. Scene 2: a problem. Scene 3: a happy ending. Add a title and music!' },
+  { id:'flip12', emoji:'📒', level:'hard', tool:'flipbook.html', toolName:'Flipbook',
+    title:'12-Frame Loop', prompt:'A smooth 12-frame looping animation.',
+    goal:'Use onion-skin to draw 12 frames that loop perfectly (the last frame leads back to the first).' },
+  { id:'liftoff', emoji:'🚀', level:'hard', tool:'world3d.html', toolName:'3D',
+    title:'Rocket Lift-Off', prompt:'Animate something flying up and away in 3D.',
+    goal:'Use the 3D studio: keyframe it small and low, then big and high, with a spin. Make it feel like blast-off!' },
+  { id:'group', emoji:'👥', level:'hard', tool:'collab.html', toolName:'Group',
+    title:'Team Movie', prompt:'Make a movie with a friend — each of you adds a scene.',
+    goal:'Use the Group Project page: build your part, share the code, and combine it with a friend’s.' },
+];
+
+const KEY = 'toonlab-challenges-done';
+function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(KEY) || '[]')); }catch(e){ return new Set(); } }
+function saveDone(set){ localStorage.setItem(KEY, JSON.stringify([...set])); }
+let done = loadDone();
+let filter = 'all';
+
+const grid = document.getElementById('grid');
+function render(){
+  grid.innerHTML = '';
+  const list = CHALLENGES.filter(c=>{
+    if (filter === 'all') return true;
+    if (filter === 'todo') return !done.has(c.id);
+    return c.level === filter;
+  });
+  list.forEach(c=>{
+    const card = document.createElement('div');
+    card.className = 'challenge-card' + (done.has(c.id) ? ' done':'');
+    card.innerHTML = `
+      <span class="lvl ${c.level}">${c.level.toUpperCase()}</span>
+      <div class="emoji">${c.emoji}</div>
+      <h3>${c.title}</h3>
+      <p>${c.prompt}</p>
+      <div class="goal">🎯 ${c.goal}</div>
+      <span class="done-stamp">✓ Done!</span>
+      <div class="row">
+        <a class="btn small blue" href="${c.tool}" data-sound="pop">▶ Open ${c.toolName}</a>
+        <button class="btn small ${done.has(c.id)?'ghost':'green'}" data-toggle="${c.id}" data-sound="ding">
+          ${done.has(c.id) ? '↩ Undo' : '✓ I did it!'}
+        </button>
+      </div>`;
+    card.querySelector('[data-toggle]').onclick = ()=>{
+      if (done.has(c.id)){ done.delete(c.id); }
+      else {
+        done.add(c.id);
+        if (window.ToonFX){ ToonFX.confettiBurst(); ToonFX.toast('Challenge complete! 🏅', '🎉'); }
+      }
+      saveDone(done); render(); updateProgress();
+    };
+    grid.appendChild(card);
+  });
+}
+function updateProgress(){
+  document.getElementById('progress').textContent = `${done.size} / ${CHALLENGES.length} challenges done`;
+}
+
+document.querySelectorAll('#filters [data-filter]').forEach(b=>{
+  b.onclick = ()=>{
+    filter = b.dataset.filter;
+    document.querySelectorAll('#filters button').forEach(x=>{ x.classList.remove('active','purple'); x.classList.add('ghost'); });
+    b.classList.remove('ghost'); b.classList.add('active','purple');
+    render();
+  };
+});
+
+/* surprise prompt generator */
+const SPARKS = [
+  'A robot who is scared of a tiny bug 🐞',
+  'Two friends sharing one umbrella in the rain ☔',
+  'A cat chasing a laser dot it can never catch 🐱',
+  'A flower growing from a seed to full bloom 🌱➡️🌸',
+  'A superhero whose only power is being SUPER slow 🦥',
+  'A snowman who really wants to visit the beach ⛄🏖️',
+  'A dragon learning to fly for the very first time 🐉',
+  'A ball that bounces higher every single time 🏀',
+  'A spaceship dodging through an asteroid field 🚀',
+  'Someone doing the world’s silliest victory dance 🕺',
+  'A ghost trying (and failing) to be spooky 👻',
+  'A paper airplane on an epic journey across a room ✈️',
+];
+document.getElementById('surprise').onclick = ()=>{
+  const card = document.getElementById('surpriseCard');
+  const pick = SPARKS[Math.floor(Math.random()*SPARKS.length)];
+  card.style.display = 'block';
+  card.innerHTML = `<div style="font-weight:800; color:#5b3da4; letter-spacing:1px; text-transform:uppercase; font-size:12px">Your prompt</div>
+    <div class="big">${pick}</div>
+    <div style="font-size:13px">Now go animate it in any tool! 🎨</div>`;
+};
+
+render();
+updateProgress();
+</script>
+</body>
+</html>

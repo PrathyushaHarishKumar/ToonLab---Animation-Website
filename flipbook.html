@@ -17,9 +17,12 @@
   <div class="nav-links">
     <a href="index.html">Home</a>
     <a href="movie.html">Movie</a>
+    <a href="world3d.html">3D</a>
     <a href="flipbook.html" class="active">Flipbook</a>
     <a href="bouncer.html">Bouncer</a>
     <a href="stickman.html">Stickman</a>
+    <a href="challenge.html">Challenges</a>
+    <a href="collab.html">Group</a>
     <a href="learn.html">Learn</a>
     <a href="quiz.html">Quiz</a>
   </div>
@@ -86,6 +89,11 @@
           <button class="btn small blue" id="saveBtn" data-sound="fanfare" data-confetti>💾 Save PNG</button>
         </div>
       </div>
+
+      <div class="group">
+        <label>My work (auto-saved)</label>
+        <div data-toonbar="flipbook"></div>
+      </div>
     </aside>
 
     <!-- STAGE -->
@@ -106,6 +114,7 @@
 <footer>Drawing is a superpower. Keep going!</footer>
 
 <script src="fx.js"></script>
+<script src="store.js"></script>
 <script>
 /* ---------------- Flipbook Studio ---------------- */
 const stage = document.getElementById('stage');
@@ -214,6 +223,7 @@ function newFrame(){
 function storeCurrent(){
   frames[current] = ctx.getImageData(0,0,stage.width,stage.height);
   updateThumb(current);
+  scheduleSave();
 }
 function redraw(){
   ctx.clearRect(0,0,stage.width,stage.height);
@@ -280,7 +290,7 @@ function deleteFrame(i){
   if (frames.length <= 1) return;
   frames.splice(i,1);
   if (current >= frames.length) current = frames.length-1;
-  rebuildThumbs(); redraw();
+  rebuildThumbs(); redraw(); scheduleSave();
 }
 addBtn.onclick = ()=>{ storeCurrent(); newFrame(); if(window.ToonFX){ ToonFX.sounds.pop(); ToonFX.toast('Frame added! Now draw it a little different.', '📒'); } };
 
@@ -324,8 +334,61 @@ document.getElementById('saveBtn').onclick = ()=>{
   a.click();
 };
 
+/* ---------- Save / restore (auto + file) ---------- */
+function frameToURL(id){
+  const c = document.createElement('canvas');
+  c.width = stage.width; c.height = stage.height;
+  c.getContext('2d').putImageData(id, 0, 0);
+  return c.toDataURL('image/png');
+}
+function serialize(){
+  storeCurrentSilent();
+  return { fps, current, frames: frames.map(frameToURL) };
+}
+function storeCurrentSilent(){
+  frames[current] = ctx.getImageData(0,0,stage.width,stage.height);
+}
+function scheduleSave(){
+  if (window.ToonStore) ToonStore.autosave('flipbook', serialize);
+}
+function restore(data){
+  if (!data || !Array.isArray(data.frames) || !data.frames.length) return false;
+  if (data.fps){ fps = data.fps; document.getElementById('fps').value = fps; document.getElementById('fpsLabel').textContent = fps; }
+  const out = new Array(data.frames.length);
+  let loaded = 0;
+  data.frames.forEach((url, i)=>{
+    const im = new Image();
+    im.onload = ()=>{
+      const c = document.createElement('canvas');
+      c.width = stage.width; c.height = stage.height;
+      const cc = c.getContext('2d');
+      cc.drawImage(im, 0, 0);
+      out[i] = cc.getImageData(0,0,stage.width,stage.height);
+      if (++loaded === data.frames.length){
+        frames.length = 0; out.forEach(f=>frames.push(f));
+        current = Math.min(data.current||0, frames.length-1);
+        rebuildThumbs(); redraw();
+      }
+    };
+    im.onerror = ()=>{ if (++loaded === data.frames.length){ rebuildThumbs(); redraw(); } };
+    im.src = url;
+  });
+  return true;
+}
+
+// Download / Open buttons
+if (window.ToonStore){
+  const bar = document.querySelector('[data-toonbar="flipbook"]');
+  if (bar) ToonStore.toolbar(bar, {
+    download: ()=> ToonStore.download('flipbook', { kind:'flipbook', data:serialize() }),
+    restore: (data)=>{ if (restore(data)){ scheduleSave(); if (window.ToonFX) ToonFX.toast('Flipbook opened!', '📂'); } }
+  });
+}
+
 setMode('brush');
-newFrame(); // start with one blank frame
+// restore saved work if any, otherwise start with one blank frame
+const _saved = window.ToonStore ? ToonStore.load('flipbook') : null;
+if (!(_saved && restore(_saved))) newFrame();
 </script>
 </body>
 </html>

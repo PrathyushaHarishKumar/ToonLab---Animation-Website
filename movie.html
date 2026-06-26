@@ -17,9 +17,12 @@
   <div class="nav-links">
     <a href="index.html">Home</a>
     <a href="movie.html" class="active">Movie</a>
+    <a href="world3d.html">3D</a>
     <a href="flipbook.html">Flipbook</a>
     <a href="bouncer.html">Bouncer</a>
     <a href="stickman.html">Stickman</a>
+    <a href="challenge.html">Challenges</a>
+    <a href="collab.html">Group</a>
     <a href="learn.html">Learn</a>
     <a href="quiz.html">Quiz</a>
   </div>
@@ -44,6 +47,10 @@
 
       <h2>🌅 World</h2>
       <div class="bg-grid" id="bgGrid" style="margin-bottom:16px"></div>
+
+      <h2>🧍 Movers <span style="font-size:12px; color:#5b3da4">(have bodies &amp; move!)</span></h2>
+      <p style="font-size:12px; font-weight:700; margin:0 0 8px; color:#5b3da4">Add one, then pick how it moves below the stage.</p>
+      <div class="cast-grid" id="bodyGrid" style="margin-bottom:16px"></div>
 
       <h2>👥 Characters</h2>
       <p style="font-size:12px; font-weight:700; margin:0 0 8px; color:#5b3da4">Click to add to your scene!</p>
@@ -73,6 +80,17 @@
         <label>↔️ <input type="checkbox" id="selFlip" /></label>
         <input type="text" id="selSpeech" placeholder="💬 What do they say? (leave blank for nothing)" />
         <button class="btn small ghost" id="selDelete" data-sound="boop">🗑 Remove</button>
+      </div>
+
+      <div class="selected-bar" id="motionBar" style="display:none">
+        <span style="font-weight:800">How it moves:</span>
+        <span class="motion-picker" id="motionWrap">
+          <button data-motion="idle">🧍 Idle</button>
+          <button data-motion="walk">🚶 Walk</button>
+          <button data-motion="wave">👋 Wave</button>
+          <button data-motion="jump">🤸 Jump</button>
+          <button data-motion="dance">💃 Dance</button>
+        </span>
       </div>
 
       <div class="scenes-bar" id="scenesBar"></div>
@@ -106,7 +124,9 @@
       <button class="btn ghost" id="stopMovie" data-sound="boop" style="width:100%; margin-bottom:18px">⏹ Stop</button>
 
       <h2>💾 Share</h2>
-      <button class="btn small blue" id="saveFrame" data-sound="ding" data-confetti style="width:100%">💾 Save this scene as PNG</button>
+      <button class="btn small blue" id="saveFrame" data-sound="ding" data-confetti style="width:100%; margin-bottom:10px">💾 Save this scene as PNG</button>
+      <label style="font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:1.5px; color:#5b3da4; display:block; margin-bottom:6px">My movie (auto-saved)</label>
+      <div data-toonbar="movie"></div>
     </aside>
   </div>
 
@@ -119,6 +139,7 @@
 <footer>You're the director, the writer, AND the cast. 🎬</footer>
 
 <script src="fx.js"></script>
+<script src="store.js"></script>
 <script>
 /* ===================================================================
    ToonLab Movie Maker
@@ -249,6 +270,33 @@ const PROP_LIBRARY = [
   '🗡️','🛡️','👑','💰','🌈','🔥','⚡','💫','🎵','🎶',
 ];
 
+/* ---------- Body "movers": articulated characters with arms + legs ----------
+   Each one is a little SVG person whose limbs the CSS animates (walk / wave /
+   jump / dance / idle). They keep moving even while the movie plays. */
+const BODY_LIBRARY = [
+  { name:'Pip',   color:'#ec4899', face:'😀' },
+  { name:'Bolt',  color:'#06b6d4', face:'😎' },
+  { name:'Fern',  color:'#84cc16', face:'🙂' },
+  { name:'Sunny', color:'#fbbf24', face:'😄' },
+  { name:'Nova',  color:'#7c3aed', face:'🤩' },
+  { name:'Coco',  color:'#fb923c', face:'😊' },
+  { name:'Berry', color:'#f43f5e', face:'😁' },
+  { name:'Sky',   color:'#38bdf8', face:'🥳' },
+];
+function bodySVG(color, face){
+  return `<svg viewBox="0 0 100 172" preserveAspectRatio="xMidYMid meet">
+    <ellipse cx="50" cy="166" rx="26" ry="5" fill="rgba(0,0,0,.18)"/>
+    <rect class="bc-leg-l" x="40" y="104" width="9" height="54" rx="4.5" fill="${color}" stroke="#1a0b3d" stroke-width="2.5"/>
+    <rect class="bc-leg-r" x="51" y="104" width="9" height="54" rx="4.5" fill="${color}" stroke="#1a0b3d" stroke-width="2.5"/>
+    <rect class="bc-arm-l" x="25" y="58" width="9" height="46" rx="4.5" fill="${color}" stroke="#1a0b3d" stroke-width="2.5"/>
+    <rect class="bc-arm-r" x="66" y="58" width="9" height="46" rx="4.5" fill="${color}" stroke="#1a0b3d" stroke-width="2.5"/>
+    <rect x="34" y="50" width="32" height="60" rx="15" fill="${color}" stroke="#1a0b3d" stroke-width="3"/>
+    <circle cx="50" cy="28" r="22" fill="${color}" stroke="#1a0b3d" stroke-width="3"/>
+    <text x="50" y="29" font-size="24" text-anchor="middle" dominant-baseline="central">${face}</text>
+  </svg>`;
+}
+const MOTIONS = ['idle','walk','wave','jump','dance'];
+
 /* ---------- State ---------- */
 let movie = {
   title: 'My Magical Adventure',
@@ -323,6 +371,18 @@ PROP_LIBRARY.forEach(emoji=>{
   b.onclick = ()=> addCast(emoji, 'prop');
   propGrid.appendChild(b);
 });
+const bodyGrid = document.getElementById('bodyGrid');
+BODY_LIBRARY.forEach(spec=>{
+  const b = document.createElement('button');
+  b.className = 'lib-btn';
+  b.title = 'Add ' + spec.name + ' (a mover with a body)';
+  b.innerHTML = `<span style="font-size:30px; line-height:1; filter:drop-shadow(2px 3px 0 rgba(0,0,0,.2))">🧍</span>`;
+  b.querySelector('span').style.color = spec.color;
+  // tint with the character color using a tiny inline svg head
+  b.innerHTML = `<span style="display:inline-block; width:34px; height:40px">${bodySVG(spec.color, spec.face)}</span>`;
+  b.onclick = ()=> addBody(spec);
+  bodyGrid.appendChild(b);
+});
 
 /* ---------- Stage rendering ---------- */
 function pxFromStage(xv, yv){
@@ -349,11 +409,20 @@ function createActor(member, pos, draggable){
   el.dataset.id = member.id;
   el.style.left = (pos.x / STAGE_W * 100) + '%';
   el.style.top  = (pos.y / STAGE_H * 100) + '%';
-  const flip = pos.flip ? 'scaleX(-1)' : '';
-  el.innerHTML = `
-    <span class="emoji" style="font-size:${pos.size}px; display:inline-block; transform:${flip}">${member.emoji}</span>
-    ${pos.speech ? `<div class="bubble">${escapeHtml(pos.speech)}</div>` : ''}
-  `;
+  const flip = pos.flip ? 'scaleX(-1)' : 'scaleX(1)';
+  const bubble = pos.speech ? `<div class="bubble">${escapeHtml(pos.speech)}</div>` : '';
+  if (member.type === 'body'){
+    const motion = pos.motion || 'idle';
+    el.innerHTML = `
+      <div class="bc-flip" style="transform:${flip}">
+        <div class="body-char motion-${motion}" style="width:${pos.size}px">${bodySVG(member.color, member.face)}</div>
+      </div>
+      ${bubble}`;
+  } else {
+    el.innerHTML = `
+      <span class="emoji" style="font-size:${pos.size}px; display:inline-block; transform:${flip}">${member.emoji}</span>
+      ${bubble}`;
+  }
   if (draggable) enableDrag(el, member);
   return el;
 }
@@ -394,29 +463,47 @@ function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
 function selectActor(member){
   selected = member;
   const pos = movie.scenes[currentScene].positions[member.id];
-  document.getElementById('selName').textContent = member.emoji;
+  document.getElementById('selName').textContent = member.type === 'body' ? `${member.face} ${member.name}` : member.emoji;
   document.getElementById('selSize').value = pos.size;
   document.getElementById('selFlip').checked = !!pos.flip;
   document.getElementById('selSpeech').value = pos.speech || '';
+  // motion picker only makes sense for body movers
+  const motionBar = document.getElementById('motionBar');
+  if (member.type === 'body'){
+    motionBar.style.display = '';
+    const m = pos.motion || 'idle';
+    document.querySelectorAll('#motionWrap button').forEach(b=>b.classList.toggle('active', b.dataset.motion === m));
+  } else {
+    motionBar.style.display = 'none';
+  }
   document.querySelectorAll('.actor').forEach(a=>a.classList.remove('selected'));
   const me = document.querySelector(`.actor[data-id="${member.id}"]`);
   if (me) me.classList.add('selected');
 }
+// motion picker buttons
+document.querySelectorAll('#motionWrap button').forEach(b=>{
+  b.onclick = ()=>{
+    if (!selected || selected.type !== 'body') return;
+    movie.scenes[currentScene].positions[selected.id].motion = b.dataset.motion;
+    renderItems(); selectActor(selected); rebuildScenesBar();
+    if (window.ToonFX) ToonFX.sounds.boop();
+  };
+});
 document.getElementById('selSize').oninput = e=>{
   if (!selected) return;
   const pos = movie.scenes[currentScene].positions[selected.id];
   pos.size = +e.target.value;
-  renderItems(); selectActor(selected);
+  renderItems(); selectActor(selected); scheduleSave();
 };
 document.getElementById('selFlip').onchange = e=>{
   if (!selected) return;
   movie.scenes[currentScene].positions[selected.id].flip = e.target.checked;
-  renderItems(); selectActor(selected);
+  renderItems(); selectActor(selected); scheduleSave();
 };
 document.getElementById('selSpeech').oninput = e=>{
   if (!selected) return;
   movie.scenes[currentScene].positions[selected.id].speech = e.target.value;
-  renderItems(); selectActor(selected);
+  renderItems(); selectActor(selected); scheduleSave();
 };
 document.getElementById('selDelete').onclick = ()=>{
   if (!selected) return;
@@ -426,6 +513,7 @@ document.getElementById('selDelete').onclick = ()=>{
   selected = null;
   document.getElementById('selName').textContent = '— click a character —';
   document.getElementById('selSpeech').value = '';
+  document.getElementById('motionBar').style.display = 'none';
   renderItems(); rebuildScenesBar();
 };
 
@@ -447,6 +535,26 @@ function addCast(emoji, kind){
   rebuildScenesBar();
   selectActor({id, emoji, kind});
   if (window.ToonFX){ ToonFX.sounds.pop(); ToonFX.toast(`Added ${emoji} to the cast!`, '🎬'); }
+}
+
+function addBody(spec){
+  const id = 'a' + (nextId++);
+  const member = { id, kind:'char', type:'body', color:spec.color, face:spec.face, name:spec.name };
+  movie.cast.push(member);
+  for (const s of movie.scenes){
+    s.positions[id] = {
+      x: 300 + Math.random()*680,
+      y: 380 + Math.random()*160,
+      size: 130,
+      speech: '',
+      flip: false,
+      motion: 'idle',
+    };
+  }
+  renderItems();
+  rebuildScenesBar();
+  selectActor(member);
+  if (window.ToonFX){ ToonFX.sounds.pop(); ToonFX.toast(`${spec.name} joined the cast! Pick a move below the stage.`, '🧍'); }
 }
 
 function addScene(){
@@ -482,9 +590,11 @@ document.getElementById('durSlider').oninput = e=>{
   dur = +e.target.value;
   document.getElementById('durLabel').textContent = dur.toFixed(1);
   if (movie.scenes[currentScene]) movie.scenes[currentScene].duration = dur;
+  scheduleSave();
 };
 
-titleEl.oninput = e => movie.title = e.target.value;
+titleEl.oninput = e => { movie.title = e.target.value; scheduleSave(); };
+document.getElementById('music').onchange = scheduleSave;
 
 /* ---------- Scenes timeline ---------- */
 function rebuildScenesBar(){
@@ -499,7 +609,7 @@ function rebuildScenesBar(){
     cast.className = 'mini-cast';
     for (const member of movie.cast.slice(0, 7)){
       const e = document.createElement('span');
-      e.textContent = member.emoji;
+      e.textContent = member.type === 'body' ? member.face : member.emoji;
       cast.appendChild(e);
     }
     t.appendChild(cast);
@@ -520,6 +630,28 @@ function rebuildScenesBar(){
   add.title = 'Add a new scene (copies the current one)';
   add.onclick = ()=>{ addScene(); if (window.ToonFX){ ToonFX.sounds.pop(); ToonFX.confettiBurst(); } };
   bar.appendChild(add);
+  scheduleSave();
+}
+function scheduleSave(){ if (window.ToonStore) ToonStore.autosave('movie', serializeMovie); }
+function serializeMovie(){
+  return { movie: JSON.parse(JSON.stringify(movie)), currentScene, music: document.getElementById('music').value };
+}
+function restoreMovie(data){
+  if (!data || !data.movie || !Array.isArray(data.movie.scenes) || !data.movie.scenes.length) return false;
+  movie = data.movie;
+  // keep nextId ahead of any saved ids so new actors don't collide
+  let maxId = 0;
+  movie.cast.forEach(c=>{ const n = parseInt(String(c.id).replace(/\D/g,''),10); if (n>maxId) maxId=n; });
+  movie.scenes.forEach(s=>{ const n = parseInt(String(s.id).replace(/\D/g,''),10); if (n>maxId) maxId=n; });
+  nextId = maxId + 1;
+  titleEl.value = movie.title || 'My Movie';
+  if (data.music !== undefined) document.getElementById('music').value = data.music;
+  currentScene = Math.min(data.currentScene || 0, movie.scenes.length - 1);
+  selected = null;
+  document.getElementById('selName').textContent = '— click a character —';
+  loadScene(currentScene);
+  if (movie.cast[0]) selectActor(movie.cast[0]);
+  return true;
 }
 
 /* ---------- PLAYBACK ---------- */
@@ -603,6 +735,10 @@ function tweenBetween(prev, cur, duration){
           sp.style.fontSize = sz + 'px';
           sp.style.transform = (b.flip ? 'scaleX(-1)' : '');
         }
+        const bc = el.querySelector('.body-char');
+        if (bc) bc.style.width = sz + 'px';
+        const flipWrap = el.querySelector('.bc-flip');
+        if (flipWrap) flipWrap.style.transform = (b.flip ? 'scaleX(-1)' : 'scaleX(1)');
         // speech bubble: show whatever cur says (the destination)
         let bub = el.querySelector('.bubble');
         if (b.speech){
@@ -691,18 +827,22 @@ document.getElementById('saveFrame').onclick = ()=>{
   for (const member of movie.cast){
     const pos = s.positions[member.id];
     if (!pos) continue;
-    ctx.save();
-    ctx.font = `${pos.size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    if (pos.flip){
-      ctx.translate(pos.x, pos.y);
-      ctx.scale(-1, 1);
-      ctx.fillText(member.emoji, 0, 0);
+    if (member.type === 'body'){
+      drawBody(ctx, member, pos);
     } else {
-      ctx.fillText(member.emoji, pos.x, pos.y);
+      ctx.save();
+      ctx.font = `${pos.size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      if (pos.flip){
+        ctx.translate(pos.x, pos.y);
+        ctx.scale(-1, 1);
+        ctx.fillText(member.emoji, 0, 0);
+      } else {
+        ctx.fillText(member.emoji, pos.x, pos.y);
+      }
+      ctx.restore();
     }
-    ctx.restore();
     if (pos.speech){
       ctx.save();
       ctx.font = `bold 32px "Fredoka","Nunito",sans-serif`;
@@ -733,6 +873,34 @@ document.getElementById('saveFrame').onclick = ()=>{
   a.href = c.toDataURL('image/png');
   a.click();
 };
+/* draw a body "mover" to the export canvas (a calm standing pose) */
+function drawBody(ctx, member, pos){
+  const sc = pos.size / 100;          // svg viewBox is 100 wide
+  const ox = pos.x, oy = pos.y;       // actor is centered on (x,y)
+  const cx = 50, cyc = 86;            // svg center (figure is near-symmetric)
+  const X = sx => ox + (sx - cx) * sc;
+  const Y = sy => oy + (sy - cyc) * sc;
+  const part = (sx, sy, w, h, r) => {
+    ctx.beginPath();
+    roundRect(ctx, X(sx), Y(sy), w*sc, h*sc, r*sc);
+    ctx.fillStyle = member.color;
+    ctx.fill();
+    ctx.lineWidth = 2.5*sc; ctx.strokeStyle = '#1a0b3d'; ctx.stroke();
+  };
+  // legs, arms, body
+  part(40,104,9,54,4.5); part(51,104,9,54,4.5);
+  part(25,58,9,46,4.5);  part(66,58,9,46,4.5);
+  part(34,50,32,60,15);
+  // head
+  ctx.beginPath();
+  ctx.arc(X(50), Y(28), 22*sc, 0, Math.PI*2);
+  ctx.fillStyle = member.color; ctx.fill();
+  ctx.lineWidth = 3*sc; ctx.strokeStyle = '#1a0b3d'; ctx.stroke();
+  // face
+  ctx.font = `${24*sc}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(member.face, X(50), Y(29));
+}
 function roundRect(ctx, x, y, w, h, r){
   ctx.beginPath();
   ctx.moveTo(x+r, y);
@@ -749,6 +917,7 @@ stage.addEventListener('pointerdown', e=>{
     selected = null;
     document.querySelectorAll('.actor').forEach(a=>a.classList.remove('selected'));
     document.getElementById('selName').textContent = '— click a character —';
+    document.getElementById('motionBar').style.display = 'none';
   }
 });
 
@@ -782,15 +951,33 @@ function init(){
       [ids[1]]:{x:820, y:340, size:130, speech:'The stars!', flip:false},
     }
   });
+  // one body "mover" so the new feature is easy to discover
+  addBody(BODY_LIBRARY[0]);
+  const bid = movie.cast[movie.cast.length-1].id;
+  movie.scenes[0].positions[bid] = { x: 620, y: 470, size:130, speech:'', flip:false, motion:'wave' };
+  movie.scenes[1].positions[bid] = { x: 620, y: 470, size:130, speech:'Wait for me!', flip:false, motion:'walk' };
+  movie.scenes[2].positions[bid] = { x: 600, y: 330, size:140, speech:'', flip:false, motion:'jump' };
   currentScene = 0;
   loadScene(0);
   selectActor(movie.cast[0]);
   rebuildScenesBar();
 }
-init();
+
+/* ---------- Save / open project ---------- */
+if (window.ToonStore){
+  const bar = document.querySelector('[data-toonbar="movie"]');
+  if (bar) ToonStore.toolbar(bar, {
+    download: ()=> ToonStore.download(movie.title || 'movie', { kind:'movie', data:serializeMovie() }),
+    restore: (data)=>{ if (restoreMovie(data)){ scheduleSave(); if (window.ToonFX){ ToonFX.confettiBurst(); ToonFX.toast('Movie opened!', '📂'); } } }
+  });
+}
+
+// restore saved movie, otherwise build the demo
+const _savedMovie = window.ToonStore ? ToonStore.load('movie') : null;
+if (!(_savedMovie && restoreMovie(_savedMovie))) init();
 
 window.addEventListener('load', ()=>{
-  setTimeout(()=> ToonFX && ToonFX.toast('Press ▶ Play Movie to see the demo!', '🎬'), 600);
+  setTimeout(()=> ToonFX && ToonFX.toast('Press ▶ Play Movie to see it come alive!', '🎬'), 600);
 });
 </script>
 </body>

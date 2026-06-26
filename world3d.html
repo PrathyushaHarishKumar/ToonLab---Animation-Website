@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>3D Studio — ToonLab</title>
+<meta name="description" content="Animate a character in real 3D! Spin, tilt, move, and grow it across keyframes, then press play." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧊</text></svg>" />
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="brand"><span class="logo"></span> ToonLab</a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="movie.html">Movie</a>
+    <a href="world3d.html" class="active">3D</a>
+    <a href="flipbook.html">Flipbook</a>
+    <a href="bouncer.html">Bouncer</a>
+    <a href="stickman.html">Stickman</a>
+    <a href="challenge.html">Challenges</a>
+    <a href="collab.html">Group</a>
+    <a href="learn.html">Learn</a>
+    <a href="quiz.html">Quiz</a>
+  </div>
+</nav>
+
+<div class="page">
+  <section class="banner">
+    <span class="float f1">🧊</span>
+    <span class="float f2">🪐</span>
+    <span class="float f3">✨</span>
+    <h1>🧊 3D Animation Studio</h1>
+    <p>This is <strong>real 3D!</strong> Spin, tilt, move, and grow your character, snap a keyframe, change it, snap another — then press ▶ Play and watch it animate smoothly through space.</p>
+  </section>
+
+  <div class="prompt-card" id="promptCard" style="max-width:680px; margin:0 auto 18px; text-align:center">
+    <div style="font-weight:800; color:#5b3da4; letter-spacing:1px; text-transform:uppercase; font-size:12px">Try animating this</div>
+    <div class="big" id="promptText"></div>
+    <button class="btn small purple" id="nextPrompt" data-sound="pop">🎲 Another idea</button>
+  </div>
+
+  <div class="studio">
+    <aside class="panel threed-controls">
+      <h2>Build it</h2>
+
+      <div class="group">
+        <label>Character (6-sided)</label>
+        <div class="cast-grid" id="faceGrid"></div>
+      </div>
+
+      <div class="group">
+        <label>↔️ Turn (spin left/right): <span id="ryLbl">0</span>°</label>
+        <input type="range" id="ry" min="-360" max="720" step="5" value="0" />
+        <label>↕️ Tilt (lean forward/back): <span id="rxLbl">-12</span>°</label>
+        <input type="range" id="rx" min="-90" max="90" step="2" value="-12" />
+        <label>⬅➡ Move left/right: <span id="xLbl">0</span></label>
+        <input type="range" id="x" min="-200" max="200" step="2" value="0" />
+        <label>⬆⬇ Move up/down: <span id="y2Lbl">0</span></label>
+        <input type="range" id="y2" min="-140" max="140" step="2" value="0" />
+        <label>🔍 Size: <span id="scLbl">1.0</span>×</label>
+        <input type="range" id="sc" min="0.4" max="2" step="0.05" value="1" />
+      </div>
+
+      <div class="group">
+        <button class="btn small ghost" id="resetPose" data-sound="boop" style="width:100%">↺ Center it</button>
+      </div>
+    </aside>
+
+    <section class="panel stage-wrap">
+      <div class="scene3d-wrap" id="scene">
+        <div class="floor3d"></div>
+        <div class="obj3d" id="obj">
+          <div class="face f-front"></div>
+          <div class="face f-back"></div>
+          <div class="face f-right"></div>
+          <div class="face f-left"></div>
+          <div class="face f-top"></div>
+          <div class="face f-bottom"></div>
+        </div>
+      </div>
+      <div class="frames" id="frames"></div>
+    </section>
+
+    <aside class="panel">
+      <h2>🎞️ Keyframes</h2>
+      <p style="font-size:13px; font-weight:700; margin:0 0 10px">Pose your character, then snap it. Change it, snap again. Play fills in the smooth in-between!</p>
+      <button class="btn green big" id="addKey" data-sound="pop" data-confetti style="width:100%; margin-bottom:10px">📸 Snap Keyframe</button>
+
+      <label style="font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:1.5px; color:#5b3da4; display:block">
+        Speed: <span id="spdLbl">1.4</span>s per step
+      </label>
+      <input type="range" id="spd" min="0.4" max="4" step="0.1" value="1.4" style="width:100%; margin-bottom:14px"/>
+
+      <label style="font-size:13px; font-weight:700; display:flex; align-items:center; gap:6px; margin-bottom:14px">
+        <input type="checkbox" id="loopChk" checked /> Loop forever
+      </label>
+
+      <div class="button-row">
+        <button class="btn pink" id="playBtn" data-sound="ding">▶ Play</button>
+        <button class="btn ghost" id="stopBtn" data-sound="boop">⏹ Stop</button>
+      </div>
+      <div class="button-row" style="margin-top:8px">
+        <button class="btn ghost small" id="clearKeys" data-sound="boop">🗑 Reset all</button>
+      </div>
+
+      <div class="group" style="margin-top:14px">
+        <label>My work (auto-saved)</label>
+        <div data-toonbar="world3d"></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="tip-strip">
+    <span class="ico">🧠</span>
+    <div><strong>3D secret:</strong> Animators think in <em>X, Y, and Z</em>. X is left/right, Y is up/down, and Z is toward you. Turning around the Y axis is how a character "spins on the spot."</div>
+  </div>
+</div>
+
+<footer>Now you're animating in three dimensions. 🚀</footer>
+
+<script src="fx.js"></script>
+<script src="store.js"></script>
+<script>
+/* ---------------- 3D Studio ---------------- */
+// Each character is six emoji faces: [front, back, right, left, top, bottom]
+const FACE_SETS = {
+  dice:   { name:'Dice 🎲',  faces:['⚀','⚅','⚂','⚃','⚄','⚁'] },
+  buddy:  { name:'Buddy 😃', faces:['😃','😄','😉','😜','🧠','👟'] },
+  robot:  { name:'Robo 🤖',  faces:['🤖','😐','⚙️','⚙️','📡','🔌'] },
+  cat:    { name:'Cat 😺',   faces:['😺','😸','😼','😽','🐱','🐾'] },
+  planet: { name:'Space 🪐', faces:['🌍','🌎','🪐','🌕','☄️','⭐'] },
+  gift:   { name:'Gift 🎁',  faces:['🎁','🎀','✨','💝','⭐','🎈'] },
+};
+const FACE_ORDER = ['f-front','f-back','f-right','f-left','f-top','f-bottom'];
+
+const obj = document.getElementById('obj');
+let faceSet = 'dice';
+function paintFaces(){
+  const f = FACE_SETS[faceSet].faces;
+  FACE_ORDER.forEach((cls,i)=>{
+    obj.querySelector('.'+cls).textContent = f[i];
+  });
+}
+
+// face picker
+const faceGrid = document.getElementById('faceGrid');
+for (const key in FACE_SETS){
+  const b = document.createElement('button');
+  b.className = 'lib-btn';
+  b.style.fontSize = '13px';
+  b.style.fontWeight = '800';
+  b.textContent = FACE_SETS[key].faces[0];
+  b.title = FACE_SETS[key].name;
+  b.onclick = ()=>{
+    faceSet = key; paintFaces();
+    document.querySelectorAll('#faceGrid .lib-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    scheduleSave();
+  };
+  faceGrid.appendChild(b);
+}
+
+/* ----- current pose ----- */
+let cur = { ry:0, rx:-12, x:0, y:0, sc:1 };
+const sliders = {
+  ry: ['ry','ryLbl', v=>Math.round(v)+'°'],
+  rx: ['rx','rxLbl', v=>Math.round(v)+'°'],
+  x:  ['x','xLbl',  v=>Math.round(v)],
+  y:  ['y2','y2Lbl', v=>Math.round(v)],
+  sc: ['sc','scLbl', v=>(+v).toFixed(2)+'×'],
+};
+function applyPose(p){
+  obj.style.transform =
+    `translate(-50%,-50%) translate3d(${p.x}px, ${p.y}px, 0) rotateX(${p.rx}deg) rotateY(${p.ry}deg) scale(${p.sc})`;
+}
+function syncSliders(){
+  for (const k in sliders){
+    const [id, lbl, fmt] = sliders[k];
+    document.getElementById(id).value = cur[k];
+    document.getElementById(lbl).textContent = fmt(cur[k]);
+  }
+}
+for (const k in sliders){
+  const [id, lbl, fmt] = sliders[k];
+  document.getElementById(id).oninput = e=>{
+    cur[k] = +e.target.value;
+    document.getElementById(lbl).textContent = fmt(cur[k]);
+    applyPose(cur);
+    scheduleSave();
+  };
+}
+document.getElementById('resetPose').onclick = ()=>{
+  cur = { ry:0, rx:-12, x:0, y:0, sc:1 };
+  syncSliders(); applyPose(cur); scheduleSave();
+};
+
+/* ----- keyframes ----- */
+let keys = [];
+const framesBar = document.getElementById('frames');
+function keyChip(p, i){
+  const t = document.createElement('div');
+  t.className = 'frame-thumb';
+  // mini 3D-ish preview: a rotated square
+  const prev = document.createElement('div');
+  prev.style.cssText = 'width:46px;height:46px;margin:7px auto;border-radius:8px;border:2px solid #1a0b3d;display:flex;align-items:center;justify-content:center;font-size:20px;background:linear-gradient(135deg,#ff7ad9,#7c3aed);';
+  prev.style.transform = `perspective(140px) rotateX(${p.rx}deg) rotateY(${p.ry}deg) scale(${0.6+p.sc*0.25})`;
+  prev.textContent = FACE_SETS[faceSet].faces[0];
+  t.appendChild(prev);
+  const num = document.createElement('div'); num.className='num'; num.textContent=i+1; t.appendChild(num);
+  const x = document.createElement('div'); x.className='x'; x.textContent='×';
+  x.onclick = ev=>{ ev.stopPropagation(); keys.splice(i,1); rebuildKeys(); scheduleSave(); };
+  t.appendChild(x);
+  t.onclick = ()=>{ cur = { ...p }; syncSliders(); applyPose(cur); };
+  return t;
+}
+function rebuildKeys(){
+  framesBar.innerHTML = '';
+  keys.forEach((p,i)=> framesBar.appendChild(keyChip(p,i)));
+}
+document.getElementById('addKey').onclick = ()=>{
+  keys.push({ ...cur });
+  rebuildKeys(); scheduleSave();
+  if (window.ToonFX) ToonFX.toast('Keyframe snapped! Change the pose and snap another.', '🎞️');
+};
+document.getElementById('clearKeys').onclick = ()=>{ keys = []; rebuildKeys(); scheduleSave(); };
+
+/* ----- playback ----- */
+let segDur = 1.4, loop = true, playing = false, raf = null;
+document.getElementById('spd').oninput = e=>{ segDur = +e.target.value; document.getElementById('spdLbl').textContent = segDur.toFixed(1); scheduleSave(); };
+document.getElementById('loopChk').onchange = e=>{ loop = e.target.checked; scheduleSave(); };
+function easeInOut(t){ return t<.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2; }
+function lerpPose(a,b,e){
+  const o = {};
+  for (const k in a) o[k] = a[k] + (b[k]-a[k])*e;
+  return o;
+}
+document.getElementById('playBtn').onclick = ()=>{
+  if (playing || keys.length < 2) {
+    if (keys.length < 2 && window.ToonFX) ToonFX.toast('Snap at least 2 keyframes first!', '🎬');
+    return;
+  }
+  playing = true;
+  let seg = 0, t0 = performance.now();
+  function frame(now){
+    if (!playing) return;
+    const a = keys[seg], b = keys[seg+1];
+    let t = Math.min(1, (now - t0)/(segDur*1000));
+    applyPose(lerpPose(a, b, easeInOut(t)));
+    if (t >= 1){
+      seg++;
+      if (seg >= keys.length-1){
+        if (loop){ seg = 0; t0 = now; }
+        else { playing = false; applyPose(keys[keys.length-1]); cur = {...keys[keys.length-1]}; syncSliders(); return; }
+      } else { t0 = now; }
+    }
+    raf = requestAnimationFrame(frame);
+  }
+  raf = requestAnimationFrame(frame);
+};
+document.getElementById('stopBtn').onclick = ()=>{
+  if (playing){ playing = false; cancelAnimationFrame(raf); applyPose(cur); syncSliders(); }
+};
+
+/* ----- prompts ----- */
+const PROMPTS = [
+  'Spin your character a FULL 360° turn 🔄',
+  'Make it grow huge, then shrink tiny 🔍',
+  'Tumble it head-over-heels (tilt all the way around) 🤸',
+  'A slow lift-off: rise up while spinning 🚀',
+  'Make it "look around" — turn left, then right, then back 👀',
+  'A bouncy entrance: pop in big, settle to normal size ✨',
+  'Roll it across the floor like a die 🎲',
+  'A shy peek: turn halfway away, then face front again 🙈',
+];
+let promptI = Math.floor(Math.random()*PROMPTS.length);
+function showPrompt(){ document.getElementById('promptText').textContent = PROMPTS[promptI % PROMPTS.length]; }
+document.getElementById('nextPrompt').onclick = ()=>{ promptI++; showPrompt(); };
+
+/* ----- save / restore ----- */
+function serialize(){ return { faceSet, cur, keys, segDur, loop }; }
+function scheduleSave(){ if (window.ToonStore) ToonStore.autosave('world3d', serialize); }
+function restore(data){
+  if (!data) return false;
+  if (data.faceSet && FACE_SETS[data.faceSet]) faceSet = data.faceSet;
+  if (data.cur) cur = data.cur;
+  if (Array.isArray(data.keys)) keys = data.keys;
+  if (typeof data.segDur === 'number'){ segDur = data.segDur; document.getElementById('spd').value = segDur; document.getElementById('spdLbl').textContent = segDur.toFixed(1); }
+  if (typeof data.loop === 'boolean'){ loop = data.loop; document.getElementById('loopChk').checked = loop; }
+  paintFaces();
+  document.querySelectorAll('#faceGrid .lib-btn').forEach((x,i)=> x.classList.toggle('active', Object.keys(FACE_SETS)[i] === faceSet));
+  syncSliders(); applyPose(cur); rebuildKeys();
+  return true;
+}
+if (window.ToonStore){
+  const bar = document.querySelector('[data-toonbar="world3d"]');
+  if (bar) ToonStore.toolbar(bar, {
+    download: ()=> ToonStore.download('3d-animation', { kind:'world3d', data:serialize() }),
+    restore: (data)=>{ if (restore(data)){ scheduleSave(); if (window.ToonFX) ToonFX.toast('3D scene opened!', '📂'); } }
+  });
+}
+
+/* ----- init ----- */
+showPrompt();
+const _saved = window.ToonStore ? ToonStore.load('world3d') : null;
+if (!(_saved && restore(_saved))){
+  // first-face active + a friendly demo: spin from front to a full turn
+  document.querySelector('#faceGrid .lib-btn').classList.add('active');
+  paintFaces();
+  syncSliders(); applyPose(cur);
+  keys = [ {ry:0,rx:-12,x:-120,y:0,sc:0.8}, {ry:180,rx:-12,x:0,y:-30,sc:1.2}, {ry:360,rx:-12,x:120,y:0,sc:0.8} ];
+  rebuildKeys();
+}
+</script>
+</body>
+</html>

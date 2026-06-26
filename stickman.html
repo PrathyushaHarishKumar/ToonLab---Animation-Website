@@ -17,9 +17,12 @@
   <div class="nav-links">
     <a href="index.html">Home</a>
     <a href="movie.html">Movie</a>
+    <a href="world3d.html">3D</a>
     <a href="flipbook.html">Flipbook</a>
     <a href="bouncer.html">Bouncer</a>
     <a href="stickman.html" class="active">Stickman</a>
+    <a href="challenge.html">Challenges</a>
+    <a href="collab.html">Group</a>
     <a href="learn.html">Learn</a>
     <a href="quiz.html">Quiz</a>
   </div>
@@ -36,10 +39,21 @@
 
   <div class="studio">
     <aside class="panel">
+      <h2>Stickmen</h2>
+
+      <div class="group">
+        <label>Your cast (click to pick one)</label>
+        <div class="figure-list" id="figureList"></div>
+        <div class="button-row" style="margin-top:8px">
+          <button class="btn small green" id="addFigure" data-sound="pop" data-confetti>➕ Add Stickman</button>
+          <button class="btn small ghost" id="removeFigure" data-sound="boop">🗑 Remove</button>
+        </div>
+      </div>
+
       <h2>Poses</h2>
 
       <div class="group">
-        <label>Quick poses</label>
+        <label>Quick poses <span style="font-weight:600; color:#5b3da4">(for the picked stickman)</span></label>
         <div class="button-row">
           <button class="btn small ghost" data-pose="stand">🧍 Stand</button>
           <button class="btn small ghost" data-pose="wave">👋 Wave</button>
@@ -73,6 +87,11 @@
           <button class="btn ghost" id="stopBtn" data-sound="boop">⏹ Stop</button>
         </div>
       </div>
+
+      <div class="group">
+        <label>My work (auto-saved)</label>
+        <div data-toonbar="stickman"></div>
+      </div>
     </aside>
 
     <section class="panel stage-wrap">
@@ -90,51 +109,17 @@
 <footer>The body has 9 bones. The story has 1,000.</footer>
 
 <script src="fx.js"></script>
+<script src="store.js"></script>
 <script>
-/* ---------------- Stickman Studio ----------------
-   The stickman is described by 11 "joints" (points).
-   You drag any joint and the bones connecting them follow.
+/* ---------------- Stickman Studio (multi-figure) ----------------
+   Each stickman is 13 "joints" (points). You can have a whole CAST
+   of them on stage. Drag any joint to bend that stickman. Each
+   keyframe remembers EVERY stickman, so they can all dance together.
 */
 const stage = document.getElementById('stage');
 const ctx = stage.getContext('2d');
 const W = stage.width, H = stage.height;
 const COLORS = ['#1f1147','#ec4899','#7c3aed','#06b6d4','#84cc16','#fbbf24','#fb923c'];
-let color = COLORS[0];
-
-const sw = document.getElementById('swatches');
-COLORS.forEach((c,i)=>{
-  const el = document.createElement('div');
-  el.className = 'swatch' + (i===0?' active':'');
-  el.style.background = c;
-  el.onclick = ()=>{
-    color = c;
-    document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));
-    el.classList.add('active');
-    render();
-  };
-  sw.appendChild(el);
-});
-
-// Joints: head, neck, hips, lshoulder, lelbow, lhand, rshoulder, relbow, rhand, lknee, lfoot, rknee, rfoot
-function makePose(cx, cy){
-  // baseline pose centered around (cx, cy)
-  return {
-    head:      [cx,        cy - 180],
-    neck:      [cx,        cy - 130],
-    hips:      [cx,        cy -  40],
-    lshoulder: [cx - 35,   cy - 120],
-    lelbow:    [cx - 70,   cy -  70],
-    lhand:     [cx - 90,   cy -  20],
-    rshoulder: [cx + 35,   cy - 120],
-    relbow:    [cx + 70,   cy -  70],
-    rhand:     [cx + 90,   cy -  20],
-    lknee:     [cx - 25,   cy +  40],
-    lfoot:     [cx - 35,   cy + 130],
-    rknee:     [cx + 25,   cy +  40],
-    rfoot:     [cx + 35,   cy + 130],
-  };
-}
-let pose = makePose(W/2, H/2 + 30);
 
 const BONES = [
   ['head','neck'],
@@ -153,16 +138,51 @@ const HANDLE_COLORS = {
   lfoot:'#7c3aed', rfoot:'#7c3aed',
 };
 
-function render(playPose=null){
-  const p = playPose || pose;
-  ctx.clearRect(0,0,W,H);
-  // floor line
-  ctx.strokeStyle = '#1f1147'; ctx.lineWidth = 3;
-  ctx.setLineDash([8,8]);
-  ctx.beginPath(); ctx.moveTo(0, H-40); ctx.lineTo(W, H-40); ctx.stroke();
-  ctx.setLineDash([]);
+// ----- joint maker -----
+function makePose(cx, cy){
+  return {
+    head:      [cx,        cy - 180],
+    neck:      [cx,        cy - 130],
+    hips:      [cx,        cy -  40],
+    lshoulder: [cx - 35,   cy - 120],
+    lelbow:    [cx - 70,   cy -  70],
+    lhand:     [cx - 90,   cy -  20],
+    rshoulder: [cx + 35,   cy - 120],
+    relbow:    [cx + 70,   cy -  70],
+    rhand:     [cx + 90,   cy -  20],
+    lknee:     [cx - 25,   cy +  40],
+    lfoot:     [cx - 35,   cy + 130],
+    rknee:     [cx + 25,   cy +  40],
+    rfoot:     [cx + 35,   cy + 130],
+  };
+}
 
-  // bones
+// ----- the cast: a list of figures, each {joints, color} -----
+let figures = [{ joints: makePose(W/2, H/2 + 30), color: COLORS[0] }];
+let sel = 0;                       // which figure is being edited
+function curFig(){ return figures[sel]; }
+
+/* ----- swatches change the SELECTED stickman's color ----- */
+const sw = document.getElementById('swatches');
+COLORS.forEach((c,i)=>{
+  const el = document.createElement('div');
+  el.className = 'swatch' + (i===0?' active':'');
+  el.style.background = c;
+  el.dataset.color = c;
+  el.onclick = ()=>{
+    curFig().color = c;
+    document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));
+    el.classList.add('active');
+    render(); rebuildFigureList(); scheduleSave();
+  };
+  sw.appendChild(el);
+});
+function syncSwatch(){
+  document.querySelectorAll('.swatch').forEach(s=>s.classList.toggle('active', s.dataset.color === curFig().color));
+}
+
+/* ----- rendering ----- */
+function drawFigure(p, color, withHandles){
   ctx.strokeStyle = color;
   ctx.lineWidth = 14;
   ctx.lineCap = 'round';
@@ -187,8 +207,7 @@ function render(playPose=null){
   ctx.arc(p.head[0], p.head[1]+8, 10, 0, Math.PI);
   ctx.stroke();
 
-  if (!playPose){
-    // handles
+  if (withHandles){
     for (const k in p){
       if (k==='neck' || k==='hips') continue;
       ctx.fillStyle = HANDLE_COLORS[k];
@@ -199,9 +218,22 @@ function render(playPose=null){
     }
   }
 }
+function render(playFrame=null){
+  ctx.clearRect(0,0,W,H);
+  // floor line
+  ctx.strokeStyle = '#1f1147'; ctx.lineWidth = 3;
+  ctx.setLineDash([8,8]);
+  ctx.beginPath(); ctx.moveTo(0, H-40); ctx.lineTo(W, H-40); ctx.stroke();
+  ctx.setLineDash([]);
 
-// drag
-let drag = null;
+  const list = playFrame || figures;
+  list.forEach((fig, idx)=>{
+    drawFigure(fig.joints, fig.color, !playFrame && idx === sel);
+  });
+}
+
+/* ----- drag joints (across any stickman; picking one selects it) ----- */
+let drag = null;     // {fig, joint}
 function getPos(e){
   const r = stage.getBoundingClientRect();
   const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
@@ -211,30 +243,40 @@ function getPos(e){
 stage.addEventListener('mousedown', e=>{ e.preventDefault(); pick(getPos(e)); });
 stage.addEventListener('touchstart', e=>{ e.preventDefault(); pick(getPos(e)); }, {passive:false});
 function pick([x,y]){
-  let best=null, bd=20;
-  for (const k in pose){
-    if (k==='neck'||k==='hips') continue;
-    const dx=x-pose[k][0], dy=y-pose[k][1];
-    const d=Math.sqrt(dx*dx+dy*dy);
-    if (d<bd){ bd=d; best=k; }
+  let best=null, bd=20, bestFig=null;
+  figures.forEach((fig, idx)=>{
+    const p = fig.joints;
+    for (const k in p){
+      if (k==='neck'||k==='hips') continue;
+      const dx=x-p[k][0], dy=y-p[k][1];
+      const d=Math.sqrt(dx*dx+dy*dy);
+      if (d<bd){ bd=d; best=k; bestFig=idx; }
+    }
+  });
+  // big head radius fallback
+  if (best===null){
+    figures.forEach((fig, idx)=>{
+      const dx=x-fig.joints.head[0], dy=y-fig.joints.head[1];
+      if (Math.sqrt(dx*dx+dy*dy) < 36){ best='head'; bestFig=idx; }
+    });
   }
-  // also allow dragging the head with bigger radius (it's a big circle)
-  if (!best){
-    const dx=x-pose.head[0], dy=y-pose.head[1];
-    if (Math.sqrt(dx*dx+dy*dy) < 36) best = 'head';
+  if (best!==null){
+    if (bestFig !== sel){ sel = bestFig; syncSwatch(); rebuildFigureList(); }
+    drag = { fig: bestFig, joint: best };
+    render();
   }
-  drag = best;
 }
 window.addEventListener('mousemove', e=>{ if (drag) move(getPos(e)); });
 window.addEventListener('touchmove', e=>{ if (drag){ e.preventDefault(); move(getPos(e)); } }, {passive:false});
 function move([x,y]){
-  pose[drag] = [Math.max(0,Math.min(W,x)), Math.max(0,Math.min(H,y))];
+  figures[drag.fig].joints[drag.joint] = [Math.max(0,Math.min(W,x)), Math.max(0,Math.min(H,y))];
   render();
 }
-window.addEventListener('mouseup', ()=> drag=null);
-window.addEventListener('touchend', ()=> drag=null);
+window.addEventListener('mouseup', ()=>{ if (drag){ drag=null; scheduleSave(); } });
+window.addEventListener('touchend', ()=>{ if (drag){ drag=null; scheduleSave(); } });
 
-// presets
+/* ----- preset poses (applied to the selected stickman, kept in place) ----- */
+function cy(p){ return p.hips[1]+40 } // ground reference of a baseline pose
 const PRESETS = {
   stand: cx => makePose(cx, H/2 + 30),
   wave: cx => {
@@ -244,7 +286,6 @@ const PRESETS = {
   },
   jump: cx => {
     const p = makePose(cx, H/2);
-    // arms up, legs together
     p.lshoulder=[cx-35,cy(p)-130]; p.lelbow=[cx-50,cy(p)-200]; p.lhand=[cx-70,cy(p)-270];
     p.rshoulder=[cx+35,cy(p)-130]; p.relbow=[cx+50,cy(p)-200]; p.rhand=[cx+70,cy(p)-270];
     p.lknee=[cx-15,cy(p)+30]; p.lfoot=[cx-20,cy(p)+110];
@@ -276,63 +317,99 @@ const PRESETS = {
     return p;
   },
 };
-function cy(p){ return p.hips[1]+40 } // helper: get the "ground" reference of a baseline pose
 document.querySelectorAll('[data-pose]').forEach(b=>{
   b.onclick = ()=>{
-    pose = PRESETS[b.dataset.pose](W/2);
-    render();
+    // keep the stickman roughly where it already is on stage
+    const atX = curFig().joints.hips[0];
+    curFig().joints = PRESETS[b.dataset.pose](atX);
+    render(); scheduleSave();
   };
 });
 
-// pose frames (keyframes)
-const poses = [];
-const framesBar = document.getElementById('frames');
-
-function snapshot(){
-  return JSON.parse(JSON.stringify(pose));
+/* ----- the cast list (chips) ----- */
+const figureList = document.getElementById('figureList');
+function rebuildFigureList(){
+  figureList.innerHTML = '';
+  figures.forEach((fig, idx)=>{
+    const chip = document.createElement('button');
+    chip.className = 'figure-chip' + (idx===sel ? ' active':'');
+    chip.style.borderColor = fig.color;
+    chip.innerHTML = `<span class="dot" style="background:${fig.color}"></span> #${idx+1}`;
+    chip.onclick = ()=>{ sel = idx; syncSwatch(); rebuildFigureList(); render(); };
+    figureList.appendChild(chip);
+  });
 }
-function thumbOf(p){
+document.getElementById('addFigure').onclick = ()=>{
+  const n = figures.length;
+  const cx = 180 + ((n*220) % (W - 300));
+  figures.push({ joints: makePose(cx, H/2 + 30), color: COLORS[n % COLORS.length] });
+  sel = figures.length - 1;
+  syncSwatch(); rebuildFigureList(); render(); scheduleSave();
+  if (window.ToonFX) ToonFX.toast('New stickman added! Drag his joints.', '🕺');
+};
+document.getElementById('removeFigure').onclick = ()=>{
+  if (figures.length <= 1){ if (window.ToonFX) ToonFX.toast('You need at least one stickman!', '🙂'); return; }
+  figures.splice(sel, 1);
+  sel = Math.min(sel, figures.length - 1);
+  syncSwatch(); rebuildFigureList(); render(); scheduleSave();
+};
+
+/* ----- keyframes: each remembers EVERY stickman ----- */
+const poses = [];   // array of frames; each frame = array of {joints,color}
+const framesBar = document.getElementById('frames');
+function snapshot(){
+  return figures.map(f => ({ joints: JSON.parse(JSON.stringify(f.joints)), color: f.color }));
+}
+function thumbOf(frame){
   const c = document.createElement('canvas');
   c.width = 80; c.height = 60;
   const cx = c.getContext('2d');
   cx.fillStyle = '#fff'; cx.fillRect(0,0,80,60);
-  // scale: stage 900x560 -> 80x60
   const sx = 80/W, sy = 60/H;
-  cx.strokeStyle = color; cx.lineWidth = 2; cx.lineCap='round';
-  for (const [a,b] of BONES){
-    cx.beginPath();
-    cx.moveTo(p[a][0]*sx, p[a][1]*sy);
-    cx.lineTo(p[b][0]*sx, p[b][1]*sy);
-    cx.stroke();
-  }
-  cx.fillStyle = color;
-  cx.beginPath(); cx.arc(p.head[0]*sx, p.head[1]*sy, 5, 0, Math.PI*2); cx.fill();
+  cx.lineWidth = 2; cx.lineCap='round';
+  frame.forEach(fig=>{
+    const p = fig.joints;
+    cx.strokeStyle = fig.color;
+    for (const [a,b] of BONES){
+      cx.beginPath();
+      cx.moveTo(p[a][0]*sx, p[a][1]*sy);
+      cx.lineTo(p[b][0]*sx, p[b][1]*sy);
+      cx.stroke();
+    }
+    cx.fillStyle = fig.color;
+    cx.beginPath(); cx.arc(p.head[0]*sx, p.head[1]*sy, 5, 0, Math.PI*2); cx.fill();
+  });
   return c;
 }
 function rebuildPoseBar(){
   framesBar.innerHTML = '';
-  poses.forEach((p,i)=>{
+  poses.forEach((frame,i)=>{
     const t = document.createElement('div');
     t.className = 'frame-thumb';
-    t.appendChild(thumbOf(p));
+    t.appendChild(thumbOf(frame));
     const num = document.createElement('div');
     num.className = 'num'; num.textContent = i+1;
     t.appendChild(num);
     const x = document.createElement('div');
     x.className = 'x'; x.textContent = '×';
-    x.onclick = ev => { ev.stopPropagation(); poses.splice(i,1); rebuildPoseBar(); };
+    x.onclick = ev => { ev.stopPropagation(); poses.splice(i,1); rebuildPoseBar(); scheduleSave(); };
     t.appendChild(x);
-    t.onclick = ()=>{ pose = JSON.parse(JSON.stringify(p)); render(); };
+    t.onclick = ()=>{
+      // load this keyframe back onto the stage to keep editing it
+      figures = frame.map(f => ({ joints: JSON.parse(JSON.stringify(f.joints)), color: f.color }));
+      sel = Math.min(sel, figures.length-1);
+      syncSwatch(); rebuildFigureList(); render();
+    };
     framesBar.appendChild(t);
   });
 }
-document.getElementById('addPose').onclick = ()=>{ poses.push(snapshot()); rebuildPoseBar(); };
-document.getElementById('clearPoses').onclick = ()=>{ poses.length = 0; rebuildPoseBar(); };
+document.getElementById('addPose').onclick = ()=>{ poses.push(snapshot()); rebuildPoseBar(); scheduleSave(); };
+document.getElementById('clearPoses').onclick = ()=>{ poses.length = 0; rebuildPoseBar(); scheduleSave(); };
 
-// playback
+/* ----- playback ----- */
 let fps = 6;
 document.getElementById('fps').oninput = e=>{
-  fps = +e.target.value; document.getElementById('fpsLabel').textContent = fps;
+  fps = +e.target.value; document.getElementById('fpsLabel').textContent = fps; scheduleSave();
 };
 let playTimer = null;
 document.getElementById('playBtn').onclick = ()=>{
@@ -347,11 +424,41 @@ document.getElementById('stopBtn').onclick = ()=>{
   if (playTimer){ clearInterval(playTimer); playTimer = null; render(); }
 };
 
-// init: drop a couple of demo poses so the play button isn't lonely
-poses.push(PRESETS.stand(W/2));
-poses.push(PRESETS.wave(W/2));
-rebuildPoseBar();
-render();
+/* ----- save / restore ----- */
+function serialize(){
+  return { fps, sel, figures, frames: poses };
+}
+function scheduleSave(){ if (window.ToonStore) ToonStore.autosave('stickman', serialize); }
+function restore(data){
+  if (!data || !Array.isArray(data.figures) || !data.figures.length) return false;
+  figures = data.figures;
+  poses.length = 0;
+  if (Array.isArray(data.frames)) data.frames.forEach(f=>poses.push(f));
+  sel = Math.min(data.sel || 0, figures.length - 1);
+  if (typeof data.fps === 'number'){ fps = data.fps; document.getElementById('fps').value = fps; document.getElementById('fpsLabel').textContent = fps; }
+  syncSwatch(); rebuildFigureList(); rebuildPoseBar(); render();
+  return true;
+}
+if (window.ToonStore){
+  const bar = document.querySelector('[data-toonbar="stickman"]');
+  if (bar) ToonStore.toolbar(bar, {
+    download: ()=> ToonStore.download('stickman', { kind:'stickman', data:serialize() }),
+    restore: (data)=>{ if (restore(data)){ scheduleSave(); if (window.ToonFX) ToonFX.toast('Stickman scene opened!', '📂'); } }
+  });
+}
+
+/* ----- init: restore, or start with one figure + 2 demo keyframes ----- */
+const _saved = window.ToonStore ? ToonStore.load('stickman') : null;
+if (!(_saved && restore(_saved))){
+  syncSwatch();
+  rebuildFigureList();
+  poses.push(snapshot());                                   // stand
+  curFig().joints = PRESETS.wave(W/2);
+  poses.push(snapshot());                                   // wave
+  curFig().joints = PRESETS.stand(W/2);
+  rebuildPoseBar();
+  render();
+}
 </script>
 </body>
 </html>
