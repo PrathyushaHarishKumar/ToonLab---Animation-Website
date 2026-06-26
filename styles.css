@@ -709,6 +709,16 @@ footer{
   color:#5b4b89;
   position:relative; z-index:1;
 }
+footer .credit{
+  display:block;
+  margin-top:10px;
+  font-family:'Fredoka',sans-serif;
+  font-size:14px;
+  font-weight:700;
+  color:var(--ink);
+  opacity:.85;
+}
+footer .credit strong{ color:var(--purple) }
 
 /* ===== Sparkle / Confetti effects (canvas overlay) ===== */
 #fx-canvas{
